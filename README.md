@@ -1,12 +1,13 @@
 # end2end — NYC Yellow Taxi 결제수단 예측
 
-2026년 5월 NYC Yellow Taxi 운행 데이터로 승객의 **결제수단(카드 vs 현금)** 을 예측하는 End2End 분석 프로젝트.
+2026년 5월 NYC Yellow Taxi 운행 데이터로 **결제수단(신용카드 / 현금 / Flex Fare)** 을 예측하는 End2End 분석 프로젝트.
 
 ## 문서
 
 | 문서 | 내용 |
 |---|---|
 | [plan.md](plan.md) | 과제 요구사항, 채점 기준, 단계별 Task·산출물 — **작업의 단일 기준** |
+| [WORKLOG.md](WORKLOG.md) | 판단이 바뀐 지점과 근거 (시간순). 번복된 판단도 남긴다 |
 | [AGENTS.md](AGENTS.md) | 에이전트·팀원 작업 규약 (파일 소유권, 브랜치, PR, 코드 규칙) |
 | [.github/pull_request_template.md](.github/pull_request_template.md) | PR 본문 형식 (의사결정 TL;DR + 근거) |
 

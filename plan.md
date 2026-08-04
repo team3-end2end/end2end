@@ -39,13 +39,22 @@
 
 프로젝트 설계의 근거가 되는, 이미 확인된 사실들:
 
-1. **타깃 누수(target leakage)**: 현금 팁은 기록되지 않아 `tip_amount`가 결제수단을 거의 그대로 노출
-   (카드 평균 팁 $4.30 vs 현금 $0.0004). → `tip_amount`, `total_amount`는 **피처에서 제외**하고 그 근거를 보고서에 명시
-2. **구조적 결측**: 결측치 955,371개(`passenger_count`, `RatecodeID`, `store_and_fwd_flag`,
-   `congestion_surcharge`, `Airport_fee`)가 `payment_type=0`(미상) 행 수와 정확히 일치 → 무작위 결측이 아님
-3. **문제 재정의**: payment_type 0(미상)·3(무료)·4(분쟁) 제거 → **카드(1) vs 현금(2) 이진 분류**
-   (카드 272.7만 / 현금 37.3만 ≈ 88:12 **클래스 불균형** → 정확도만으론 부족, F1 + 다수 클래스 베이스라인(88%) 비교 필수)
+1. **타깃 누수(target leakage)**: 현금 팁은 기록되지 않아 `tip_amount`가 결제수단을 그대로 노출
+   (팁 > 0 비율: 카드 90.2%, 그 외 0%). → 누수 컬럼 7개를 **피처에서 제외**하고 근거를 보고서에 명시
+   (`tip_amount`, `total_amount`, `congestion_surcharge`, `Airport_fee`, `RatecodeID`,
+   `passenger_count`, `store_and_fwd_flag`)
+2. **`payment_type=0`은 결측이 아니라 Flex Fare**: 955,371건에서 위 5개 컬럼이 100% 비어 있으나
+   (다른 클래스는 0%), 이는 결측이 아니라 **해당 없음**이다. TLC 공식 데이터 사전에 `0 = Flex Fare trip`으로
+   명시된 앱 기반 사전 확정요금 제도로, 미터기 세부 요금 필드가 애초에 존재하지 않는다.
+   → 정상 클래스로 포함하되, 위 컬럼들은 피처에서 제외해 누수를 차단한다. (판단 번복 경위는 [WORKLOG.md](WORKLOG.md) 참조)
+3. **문제 정의**: payment_type 3(무료)·4(분쟁)만 제거(합산 0.85%로 학습 불가) →
+   **신용카드(1) / 현금(2) / Flex Fare(0) 3-클래스 분류**
+   (정제 후 68.4 : 22.6 : 9.1 → 최소 클래스 9%로 `class_weight="balanced"`로 다룰 수 있는 수준.
+   다만 **정확도만으론 부족** — 최빈 클래스만 예측하는 베이스라인이 정확도 0.68이므로 macro F1과 함께 볼 것)
 4. **이상치 존재**: 음수 요금(min -$950), trip_distance 최대 307,491마일 → 정제 단계에서 처리
+5. **Flex Fare 요금의 끝자리 패턴**: 요금이 $0.50 배수인 비율이 Flex Fare 2.8% vs 카드 27.4% / 현금 25.4%.
+   사전 확정요금이라 미터기 요금과 소수점 분포가 다르다. 누수는 아니지만 모델의 Flex Fare 분류가
+   이 패턴에 의존할 수 있으므로 EDA에서 확인한다.
 
 ---
 
@@ -54,6 +63,7 @@
 ```
 .
 ├── plan.md                  # 이 문서 — 요구사항·산출물 기준
+├── WORKLOG.md               # 판단이 바뀐 지점과 근거 (시간순)
 ├── AGENTS.md                # 에이전트·팀원 작업 규약 (PR, 파일 소유권)
 ├── .github/
 │   └── pull_request_template.md
@@ -94,14 +104,19 @@
 
 ### Step 2 — 정제 + EDA + 시각화 (`02_clean_eda.py`)
 **Task**
-- 결측치 현황 출력 → 구조적 결측(payment_type=0과 일치) 근거 제시
+- 결측치 현황 출력 → 결측이 `payment_type=0`(Flex Fare)과 100% 일치함을 보이고,
+  이것이 무작위 결측이 아니라 **해당 없음**임을 근거와 함께 제시
 - 중복 행 확인(0건임을 출력하는 것도 "처리했다"는 증빙)
-- 필터링: payment_type ∈ {1, 2}, fare_amount > 0, 0 < trip_distance < 100, 유효한 pickup/dropoff 시간
-- 파생 변수: `trip_duration_min`, `pickup_hour`, `is_weekend`
-- 정제 전후 행 수 변화 출력
-- **Seaborn 정적 차트**: 결제수단별 fare_amount 분포 (boxplot/violinplot)
-- **Plotly 인터랙티브 차트**: 시간대별 카드/현금 비율 추이 (grouped bar 또는 line)
+- 필터링: payment_type ∈ **{0, 1, 2}**, fare_amount > 0, 0 < trip_distance < 200,
+  0 < trip_duration_min < 180
+- 파생 변수: `trip_duration_min`, `pickup_hour`, `is_weekend`, `day_of_week`
+- 타깃 라벨: `payment_label` (0→Flex Fare, 1→신용카드, 2→현금)
+- **필터 규칙별 제거 건수를 각각 출력** (PR·리포트의 근거로 사용)
+- 정제 전후 행 수 변화 출력, 클래스 분포 출력
+- **Seaborn 정적 차트**: 결제수단별 fare_amount(또는 trip_distance) 분포 (boxplot/violinplot)
+- **Plotly 인터랙티브 차트**: 시간대별 결제수단 구성비 추이 (stacked bar 또는 line)
 - 두 차트 모두 제목·축 레이블 포함
+- (선택) Flex Fare 요금 끝자리 패턴 확인 — 위 발견 5번 검증
 
 **산출물**
 - `outputs/figures/seaborn_fare_by_payment.png`
@@ -109,7 +124,8 @@
 - 정제된 데이터: `data/processed/cleaned.parquet` (Step 3·4의 입력)
 - `outputs/results/eda.json` — 결측치 수, 정제 전후 행 수 등
 
-**검증**: 정제 후 payment_type이 {1,2}만 남았는지, 차트 파일 2개 존재 확인
+**검증**: 정제 후 payment_type이 {0,1,2}만 남았는지, 클래스 분포가 약 68 : 23 : 9인지,
+차트 파일 2개 존재 확인
 
 ---
 
@@ -118,7 +134,7 @@
 - 기술통계: 주요 수치형 변수(fare_amount, trip_distance, trip_duration_min 등)의
   평균·표준편차·분위수(25/50/75%) 테이블 출력
 - 상관계수: 수치형 변수 간 Pearson 상관행렬 계산·출력
-- **t-test**: "카드 결제와 현금 결제의 평균 fare_amount는 다른가"
+- **t-test**: "신용카드와 현금 결제의 평균 fare_amount는 다른가" (두 그룹 비교이므로 3-클래스여도 그대로 성립)
   - `scipy.stats.ttest_ind(card, cash, equal_var=False)` (Welch's t-test)
   - t-통계량, p-value 출력 + **해석 문장** (대표본이라 p-value가 극단적으로 작음 →
     "통계적 유의 ≠ 실질적 차이 크기" 논의, 평균 차이 자체도 함께 제시)
@@ -133,15 +149,20 @@
 
 ### Step 4 — ML Pipeline (`04_ml_pipeline.py`)
 **Task**
-- 타깃: `is_card` (payment_type==1), **누수 피처 제외**(tip_amount, total_amount 및 파생 요금 합계류)
-- 사용 피처: trip_distance, fare_amount, trip_duration_min, passenger_count,
-  pickup_hour, is_weekend, PULocationID/DOLocationID(범주형), RatecodeID 등
-- 층화 샘플링 30~50만 행 (전체 409만 행은 불필요, 실행 시간 관리)
-- train/test 분할 (`train_test_split`, stratify, random_state 고정)
+- 타깃: `payment_label` 3-클래스 (신용카드 / 현금 / Flex Fare)
+- **누수 피처 제외 7개**: tip_amount, total_amount, congestion_surcharge, Airport_fee,
+  RatecodeID, passenger_count, store_and_fwd_flag
+- 사용 피처: 수치형 trip_distance, fare_amount, trip_duration_min /
+  범주형 PULocationID, DOLocationID, pickup_hour, day_of_week, VendorID
+- 층화 샘플링 30만 행 (전체 389만 행 학습은 5분 이상 소요되어 실습에 비효율적)
+- train/test 분할 (`train_test_split`, stratify, `random_state=42`)
 - **`Pipeline` = `ColumnTransformer`(수치형 StandardScaler + 범주형 OneHotEncoder) + 모델**
-  - 베이스라인: LogisticRegression
-  - 본 모델: HistGradientBoostingClassifier
-- 평가: accuracy, F1, confusion matrix + **다수 클래스 베이스라인(≈88%)과 비교**
+  - 피처 간 상관이 높으므로(0.76~0.86) 트리 기반 모델 사용
+  - `class_weight="balanced"` 적용 (클래스 비율 68 : 23 : 9)
+- 평가: accuracy, **클래스별 F1 + macro F1**, confusion matrix
+  - **베이스라인 2종과 비교**: 최빈 클래스만 예측 시 정확도 0.68 / macro F1 약 0.27
+  - `class_weight="balanced"`는 소수 클래스 recall을 얻는 대신 **정확도를 희생**한다.
+    정확도가 베이스라인보다 낮게 나올 수 있으며, 이는 의도된 트레이드오프임을 반드시 명시할 것
 - `joblib.dump(pipeline, 'outputs/model/payment_classifier.joblib')`
 
 **산출물**
@@ -181,11 +202,14 @@
 ## 5. 발표 스토리라인 (5분)
 
 1. 문제 정의: 운행 정보만으로 결제수단을 예측할 수 있는가?
-2. **핵심 발견**: tip_amount 타깃 누수 발견 → 제외 결정 (차별화 포인트)
-3. 구조적 결측 분석 → 카드 vs 현금 이진 분류로 재정의
-4. 통계: 카드/현금 그룹 간 요금 차이 t-test 결과
-5. 모델: 베이스라인(88%) 대비 성능, F1 중심 해석
-6. 한계 및 개선 방향
+   (원 주제였던 "매칭 위치 예측"이 데이터 한계로 불가능했던 경위 포함)
+2. **핵심 발견 1 — 타깃 누수**: tip_amount가 정답을 노출(카드만 팁>0 90.2%) → 7개 컬럼 제외
+3. **핵심 발견 2 — 판단 번복**: 결측 95만 건을 불량 데이터로 봤으나 실제로는 Flex Fare였음
+   → 제외 대상에서 정상 클래스로 전환, 3-클래스로 재정의 (근거: TLC 공식 데이터 사전)
+4. 통계: 신용카드/현금 요금 차이 t-test — 통계적 유의성과 실질적 효과 크기의 구분
+5. 모델: 베이스라인(정확도 0.68 / macro F1 0.27) 대비 성능.
+   **정확도가 낮아진 것이 소수 클래스를 살린 대가임을 설명** (가장 설명력 있는 대목)
+6. 한계: 현금 클래스 precision이 낮음 / 개선 방향
 
 ## 6. 시간 배분 가이드
 
