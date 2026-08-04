@@ -20,6 +20,8 @@ plan.md와 충돌하는 판단이 필요하면 임의로 진행하지 말고 PR 
 
 여러 에이전트가 동시에 작업하므로, **자기 Step 파일 밖은 건드리지 않는다.**
 
+담당자 이름은 [plan.md의 "담당자 배정" 표](plan.md)에 있다. 여기는 파일 소유권만 다룬다.
+
 | 담당 | 소유 파일 | 산출물 |
 |---|---|---|
 | Step 1 | `src/01_load_compare.py` | `results/load_compare.{json,md}` |

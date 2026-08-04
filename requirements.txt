@@ -1,10 +1,17 @@
-pandas
-polars
-pyarrow
-numpy
-seaborn
-matplotlib
-plotly
-scipy
-scikit-learn
-joblib
+# Python 3.11 기준.
+#
+# 버전을 고정하는 이유: RANDOM_STATE를 고정한 것과 같다.
+# 핀이 없으면 시스템에 깔린 pandas 1.x로 실행되어 Step 1이 다른 API 동작을 타고,
+# 같은 코드가 다른 결과를 낸다(PR #1 리뷰에서 실제로 발생).
+#
+#   python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+pandas==3.0.3
+polars==1.43.2
+pyarrow==25.0.0
+numpy==2.4.6
+seaborn==0.13.2
+matplotlib==3.11.1
+plotly==6.9.0
+scipy==1.17.1
+scikit-learn==1.9.0
+joblib==1.5.3

@@ -27,15 +27,22 @@ curl -o data/raw/yellow_tripdata_2026-05.parquet \
 ## 실행
 
 ```bash
-pip install -r requirements.txt
+# 버전이 고정돼 있으므로 Python 3.11 venv를 새로 만들어 설치할 것.
+# 시스템 파이썬에 pandas 1.x가 깔려 있으면 01이 다른 API 동작을 탄다.
+python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
-python src/01_load_compare.py   # Pandas vs Polars 로딩·전처리 성능 비교
-python src/02_preprocess.py     # 정제 + 파생변수 → cleaned.parquet
-python src/03_eda.py            # EDA (숫자로만) + 피처 화이트리스트 확정
-python src/04_stats.py          # t-test + 효과 크기
-python src/05_visualize.py      # Seaborn · Plotly 차트
-python src/06_ml_pipeline.py    # sklearn Pipeline 학습 · 평가 · 저장
-python src/07_report.py         # outputs/report.md 자동 생성
+.venv/bin/python src/01_load_compare.py   # Pandas vs Polars 로딩·전처리 성능 비교
+.venv/bin/python src/02_preprocess.py     # 정제 + 파생변수 → cleaned.parquet
+.venv/bin/python src/03_eda.py            # EDA (숫자로만) + 피처 화이트리스트 확정
+```
+
+아래는 아직 작성 전이다 (담당자는 [plan.md](plan.md)의 담당자 배정 표 참조).
+
+```bash
+.venv/bin/python src/04_stats.py          # t-test + 효과 크기
+.venv/bin/python src/05_visualize.py      # Seaborn · Plotly 차트
+.venv/bin/python src/06_ml_pipeline.py    # sklearn Pipeline 학습 · 평가 · 저장
+.venv/bin/python src/07_report.py         # outputs/report.md 자동 생성
 ```
 
 데이터를 바꾸는 단계는 `02` 하나뿐이고, `03`·`04`·`05`는 `cleaned.parquet`을 읽기만 하므로
