@@ -22,11 +22,18 @@ plan.md와 충돌하는 판단이 필요하면 임의로 진행하지 말고 PR 
 
 | 담당 | 소유 파일 | 산출물 |
 |---|---|---|
-| Step 1 | `src/01_load_compare.py` | `outputs/results/load_compare.json` |
-| Step 2 | `src/02_clean_eda.py` | `outputs/figures/*`, `data/processed/cleaned.parquet`, `outputs/results/eda.json` |
-| Step 3 | `src/03_stats.py` | `outputs/results/stats.json` |
-| Step 4 | `src/04_ml_pipeline.py` | `outputs/model/*.joblib`, `outputs/results/ml.json` |
-| Step 5 | `src/05_report.py` | `outputs/report.md` |
+| Step 1 | `src/01_load_compare.py` | `results/load_compare.{json,md}` |
+| Step 2 | `src/02_preprocess.py` | **`data/processed/cleaned.parquet`**, `results/preprocess.{json,md}` |
+| Step 3 | `src/03_eda.py` | `results/eda.{json,md}`, **`results/features.json`** |
+| Step 4 | `src/04_stats.py` | `results/stats.{json,md}` |
+| Step 5 | `src/05_visualize.py` | `outputs/figures/*`, `results/figures.json` |
+| Step 6 | `src/06_ml_pipeline.py` | `outputs/model/*.joblib`, `results/ml.{json,md}` |
+| Step 7 | `src/07_report.py` | `outputs/report.md` |
+
+(`results/`는 `outputs/results/`를 줄여 쓴 것)
+
+**단계 성격**: 02는 데이터를 만드는 유일한 단계다. 03·04·05는 `cleaned.parquet`을 읽기만 하며
+서로 의존하지 않으므로 **동시에 작업해도 된다.** 06은 03의 `features.json`이, 07은 전 단계가 필요하다.
 
 **공용 파일**(`plan.md`, `README.md`, `AGENTS.md`, `requirements.txt`)을 수정해야 하면
 그 변경만 담은 별도 커밋으로 분리하고 PR 본문에 이유를 남긴다.

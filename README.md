@@ -29,14 +29,17 @@ curl -o data/raw/yellow_tripdata_2026-05.parquet \
 ```bash
 pip install -r requirements.txt
 
-python src/01_load_compare.py   # Pandas vs Polars 로딩 비교
-python src/02_clean_eda.py      # 정제 + EDA + 시각화
-python src/03_stats.py          # 기술통계 · 상관계수 · t-test
-python src/04_ml_pipeline.py    # sklearn Pipeline 학습 · 평가 · 저장
-python src/05_report.py         # outputs/report.md 자동 생성
+python src/01_load_compare.py   # Pandas vs Polars 로딩·전처리 성능 비교
+python src/02_preprocess.py     # 정제 + 파생변수 → cleaned.parquet
+python src/03_eda.py            # EDA (숫자로만) + 피처 화이트리스트 확정
+python src/04_stats.py          # t-test + 효과 크기
+python src/05_visualize.py      # Seaborn · Plotly 차트
+python src/06_ml_pipeline.py    # sklearn Pipeline 학습 · 평가 · 저장
+python src/07_report.py         # outputs/report.md 자동 생성
 ```
 
-각 스크립트는 단독 실행 가능하되, 앞 단계 산출물에 의존하는 경우 순서대로 실행해야 한다.
+데이터를 바꾸는 단계는 `02` 하나뿐이고, `03`·`04`·`05`는 `cleaned.parquet`을 읽기만 하므로
+서로 순서를 바꿔도 된다. `06`은 `03`이 만든 `features.json`이, `07`은 앞 단계 전부가 필요하다.
 
 ## 협업
 

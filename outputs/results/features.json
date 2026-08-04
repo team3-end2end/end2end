@@ -1,0 +1,33 @@
+{
+  "target": "payment_label",
+  "numeric": [
+    "trip_distance",
+    "fare_amount",
+    "trip_duration_min"
+  ],
+  "categorical": [
+    "PULocationID",
+    "DOLocationID",
+    "pickup_hour",
+    "day_of_week",
+    "VendorID"
+  ],
+  "excluded_leakage": [
+    "tip_amount",
+    "total_amount",
+    "congestion_surcharge",
+    "Airport_fee",
+    "RatecodeID",
+    "passenger_count",
+    "store_and_fwd_flag"
+  ],
+  "excluded_reason": {
+    "tip_amount": "현금 팁은 미기록 — 결제수단을 그대로 노출",
+    "total_amount": "tip_amount를 포함하므로 동일한 누수",
+    "congestion_surcharge": "Flex Fare에서만 결측 — 결측 여부가 정답을 노출",
+    "Airport_fee": "위와 동일",
+    "RatecodeID": "위와 동일",
+    "passenger_count": "위와 동일",
+    "store_and_fwd_flag": "위와 동일"
+  }
+}
