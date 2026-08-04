@@ -8,10 +8,12 @@ Step 3 — EDA (탐색적 데이터 분석)
 제거 후에는 11% 차이였다. 숫자를 먼저 확인해야 그림을 올바로 읽을 수 있다.
 
 수행 항목:
-  1) 클래스 분포와 베이스라인 성능    5) 지역 패턴 (교차표)
-  2) 전체 기술통계                    6) 상관계수 (수치형끼리만)
-  3) 결제수단별 기술통계              7) 타깃 누수 진단
-  4) 시간 패턴 (시간대·요일)          8) 피처 화이트리스트 확정
+  1) 클래스 분포와 베이스라인 성능    4) 지역 패턴 (교차표)
+  2) 결제수단별 기술통계              5) 타깃 누수 진단
+  3) 시간 패턴 (시간대·요일)          6) 피처 화이트리스트 확정
+
+전체 기술통계(2-3 담당)와 상관계수(2-2 담당)는 이 파일에서 다루지 않는다.
+한때 여기 있었으나 분업 경계를 넘은 것이어서 원 담당자에게 반환했다(PR #1 리뷰).
 
 산출물:
   - outputs/results/eda.json / eda.md
@@ -34,9 +36,15 @@ PREPROCESS_JSON = RESULT_DIR / "preprocess.json"
 # 누수 위험이 없는 수치형 피처. 상관분석 대상이기도 하다.
 NUMERIC_FEATURES = ["trip_distance", "fare_amount", "trip_duration_min"]
 
-# 범주형 피처. PULocationID 등은 숫자로 저장돼 있지만 지역·업체 코드이므로
+# 범주형 피처. PULocationID 등은 숫자로 저장돼 있지만 지역 코드이므로
 # 연속형으로 취급해 상관계수를 계산하면 통계적으로 무의미하다. 교차표로 본다.
-CATEGORICAL_FEATURES = ["PULocationID", "DOLocationID", "pickup_hour", "day_of_week", "VendorID"]
+# 여기 들어가는 컬럼은 반드시 main()에서 타깃과 교차표로 검증한 뒤 확정한다.
+CATEGORICAL_FEATURES = ["PULocationID", "DOLocationID", "pickup_hour", "day_of_week"]
+
+# 검증 결과 누수로 판정되어 제외한 범주형 컬럼.
+CATEGORICAL_LEAKAGE = {
+    "VendorID": "VendorID=6인 6,614행이 예외 없이 전부 Flex Fare — 원핫 시 정답을 그대로 노출",
+}
 
 TARGET = "payment_label"
 TOP_N_ZONES = 10
@@ -90,26 +98,8 @@ def class_distribution_and_baseline(df: pd.DataFrame) -> dict:
     }
 
 
-def describe_overall(df: pd.DataFrame) -> list[dict]:
-    """2) 전체 기술통계 — 평균·표준편차·분위수 (과제 요구사항)."""
-    d = df[NUMERIC_FEATURES].describe().T
-    return [
-        {
-            "변수": idx,
-            "평균": round(row["mean"], 2),
-            "표준편차": round(row["std"], 2),
-            "최솟값": round(row["min"], 2),
-            "25%": round(row["25%"], 2),
-            "중앙값": round(row["50%"], 2),
-            "75%": round(row["75%"], 2),
-            "최댓값": round(row["max"], 2),
-        }
-        for idx, row in d.iterrows()
-    ]
-
-
 def describe_by_class(df: pd.DataFrame) -> list[dict]:
-    """3) 결제수단별 기술통계 — EDA의 핵심인 그룹 간 비교."""
+    """2) 결제수단별 기술통계 — EDA의 핵심인 그룹 간 비교."""
     g = df.groupby(TARGET)
     out = []
     for label, sub in g:
@@ -135,61 +125,50 @@ def composition_by(df: pd.DataFrame, col: str) -> list[dict]:
     ]
 
 
-def zone_composition(df: pd.DataFrame) -> list[dict]:
-    """5) 지역 패턴 — 픽업 상위 구역의 결제수단 구성비.
+def zone_composition(df: pd.DataFrame, col: str = "PULocationID") -> list[dict]:
+    """5) 지역 패턴 — 상위 구역의 결제수단 구성비.
 
-    PULocationID는 임의로 부여된 지역 코드이므로 상관계수 대상이 아니다. 교차표로 본다.
+    지역 ID는 임의로 부여된 코드이므로 상관계수 대상이 아니다. 교차표로 본다.
     """
-    top = df["PULocationID"].value_counts().head(TOP_N_ZONES)
-    sub = df[df["PULocationID"].isin(top.index)]
-    ct = pd.crosstab(sub["PULocationID"], sub[TARGET], normalize="index") * 100
+    top = df[col].value_counts().head(TOP_N_ZONES)
+    sub = df[df[col].isin(top.index)]
+    ct = pd.crosstab(sub[col], sub[TARGET], normalize="index") * 100
     return [
-        {"PULocationID": int(z), "픽업건수": int(top[z]),
+        {col: int(z), "건수": int(top[z]),
          **{c: round(float(ct.loc[z, c]), 2) for c in ct.columns}}
         for z in top.index
     ]
 
 
-def correlation(df: pd.DataFrame) -> dict:
-    """6) 상관계수 — 수치형 변수끼리만 (Pearson).
-
-    타깃은 3개 범주라 상관계수로 관계를 볼 수 없으므로, 타깃과의 관계는
-    describe_by_class()와 composition_by()의 그룹 비교로 대신한다.
-    """
-    corr = df[NUMERIC_FEATURES].corr().round(3)
-    return {
-        "columns": NUMERIC_FEATURES,
-        "matrix": [
-            {"변수": idx, **{c: float(row[c]) for c in corr.columns}}
-            for idx, row in corr.iterrows()
-        ],
-        "max_offdiag": round(float(corr.where(~np.eye(len(corr), dtype=bool)).max().max()), 3),
-    }
-
-
 def leakage_diagnostics(df: pd.DataFrame) -> dict:
-    """7) 타깃 누수 진단 — 이 프로젝트의 핵심 발견.
+    """5) 타깃 누수 진단 — 이 프로젝트의 핵심 발견.
 
-    (a) 팁: 현금 팁은 기록되지 않아 tip_amount가 결제수단을 그대로 노출한다.
+    (a) 팁: 현금은 구조적으로 팁이 기록되지 않아 tip_amount가 결제수단을 노출한다.
     (b) 요금 끝자리: Flex Fare는 사전 확정요금이라 미터기 요금과 소수점 분포가 다르다.
         누수는 아니지만 Flex Fare를 거의 식별하는 강한 신호이므로 함께 기록한다.
+    (c) VendorID: 기록 경로를 나타내는 변수라 특정 값이 결제수단을 그대로 노출한다.
     """
-    tip = (
-        df.assign(팁있음=df["tip_amount"] > 0)
-        .groupby(TARGET)["팁있음"]
-        .mean()
-        .mul(100)
-        .round(1)
-    )
+    # 소수 1자리로 반올림하면 현금의 0.01%가 0.0%로 보여 "현금은 팁이 전혀 없다"는
+    # 잘못된 서술을 유도한다. 건수를 함께 남기고 2자리까지 기록한다.
+    has_tip = df["tip_amount"] > 0
+    tip_n = has_tip.groupby(df[TARGET]).sum()
+    tip = has_tip.groupby(df[TARGET]).mean().mul(100).round(2)
+
     # 부동소수점 오차를 피하기 위해 센트 단위 정수로 변환해 비교한다.
     cents = (df["fare_amount"] * 100).round().astype("int64")
-    half = df.assign(반달러배수=cents % 50 == 0).groupby(TARGET)["반달러배수"].mean().mul(100).round(1)
+    half = df.assign(반달러배수=cents % 50 == 0).groupby(TARGET)["반달러배수"].mean().mul(100).round(2)
 
     return {
-        "tip_positive_pct": [{"결제수단": k, "팁>0 비율%": float(v)} for k, v in tip.items()],
+        "tip_positive_pct": [
+            {"결제수단": k, "팁>0 비율%": float(v), "팁>0 건수": int(tip_n[k])}
+            for k, v in tip.items()
+        ],
         "fare_half_dollar_pct": [
             {"결제수단": k, "$0.50 배수 비율%": float(v)} for k, v in half.sort_values().items()
         ],
+        # 건수가 필요하므로 composition_by 대신 zone_composition을 쓴다.
+        # VendorID는 값이 3개뿐이라 상위 N개 제한에 걸리지 않는다.
+        "vendor_composition": zone_composition(df, "VendorID"),
     }
 
 
@@ -203,7 +182,7 @@ def build_feature_whitelist(leakage_cols: list[str]) -> dict:
         "target": TARGET,
         "numeric": NUMERIC_FEATURES,
         "categorical": CATEGORICAL_FEATURES,
-        "excluded_leakage": leakage_cols,
+        "excluded_leakage": leakage_cols + list(CATEGORICAL_LEAKAGE),
         "excluded_reason": {
             "tip_amount": "현금 팁은 미기록 — 결제수단을 그대로 노출",
             "total_amount": "tip_amount를 포함하므로 동일한 누수",
@@ -212,11 +191,13 @@ def build_feature_whitelist(leakage_cols: list[str]) -> dict:
             "RatecodeID": "위와 동일",
             "passenger_count": "위와 동일",
             "store_and_fwd_flag": "위와 동일",
+            **CATEGORICAL_LEAKAGE,
+            "is_weekend": "day_of_week에서 완전히 유도되므로 정보 중복 (요일별 고유값 1개)",
         },
     }
     # 누수 컬럼이 화이트리스트에 섞이지 않았는지 검증한다.
     used = set(whitelist["numeric"]) | set(whitelist["categorical"])
-    overlap = used & set(leakage_cols)
+    overlap = used & set(whitelist["excluded_leakage"])
     assert not overlap, f"누수 컬럼이 피처에 포함됨: {overlap}"
     return whitelist
 
@@ -237,7 +218,6 @@ def write_markdown(r: dict, w: dict) -> None:
         return f"{head}\n{sep}\n{body}"
 
     cls = r["class_and_baseline"]
-    corr = r["correlation"]
 
     md = f"""# Step 3 — EDA 결과
 
@@ -256,15 +236,11 @@ Step 6의 모델은 이 두 수치와 비교해 평가한다. 특히 **정확도
 소수 클래스를 살리려 `class_weight="balanced"`를 쓰면 정확도는 오히려 떨어질 수 있으며,
 그때 판단 기준은 macro F1이다.
 
-## 2. 전체 기술통계
-
-{table(r['describe_overall'])}
-
-## 3. 결제수단별 기술통계
+## 2. 결제수단별 기술통계
 
 {table(r['describe_by_class'])}
 
-## 4. 시간 패턴
+## 3. 시간 패턴
 
 ### 시간대별 결제수단 구성비 (%)
 
@@ -274,34 +250,36 @@ Step 6의 모델은 이 두 수치와 비교해 평가한다. 특히 **정확도
 
 {table(r['weekday_composition'])}
 
-## 5. 지역 패턴 — 픽업 상위 {TOP_N_ZONES}개 구역 구성비 (%)
+## 4. 지역 패턴 — 상위 {TOP_N_ZONES}개 구역 구성비 (%)
+
+### 승차 구역 (`PULocationID`)
 
 {table(r['zone_composition'])}
 
-> `PULocationID`는 임의로 부여된 지역 코드다. 숫자로 저장돼 있다고 해서 상관계수를 계산하면
+### 하차 구역 (`DOLocationID`)
+
+{table(r['dropoff_zone_composition'])}
+
+> 지역 ID는 임의로 부여된 코드다. 숫자로 저장돼 있다고 해서 상관계수를 계산하면
 > 통계적으로 무의미하므로, 교차표로 확인했다.
+>
+> 두 컬럼 모두 구역마다 구성비가 완만하게 달라질 뿐 특정 구역이 결제수단을 확정하지 않는다.
+> **정상 신호이므로 피처로 사용한다.** (같은 검사에서 탈락한 `VendorID`는 5절 (c) 참조)
 
-## 6. 상관계수 (수치형 변수끼리만)
-
-{table(corr['matrix'])}
-
-대각선을 뺀 최댓값이 **{corr['max_offdiag']}**로, 세 변수가 강하게 묶여 있다.
-거리가 길수록 요금과 소요시간이 함께 는다는 자연스러운 관계지만,
-**셋을 모두 넣으면 같은 정보가 중복된다**는 뜻이기도 하다.
-Step 6에서 다중공선성의 영향을 덜 받는 트리 기반 모델을 쓰는 근거가 된다.
-
-타깃(`{TARGET}`)은 3개 범주라 상관계수로 관계를 볼 수 없다.
-타깃과의 관계는 위 3·4·5절의 그룹 비교로 대신했다.
-
-## 7. 타깃 누수 진단 — 이 프로젝트의 핵심 발견
+## 5. 타깃 누수 진단 — 이 프로젝트의 핵심 발견
 
 ### (a) 팁 지급 비율
 
 {table(r['leakage']['tip_positive_pct'])}
 
-카드 결제만 팁이 기록된다. 즉 `tip_amount`를 피처로 쓰면 모델은
-"팁이 있으면 카드"를 외우게 되며, 이는 예측이 아니라 정답을 베끼는 것이다.
-`total_amount`도 팁을 포함하므로 같은 이유로 제외한다.
+**현금은 구조적으로 팁이 기록되지 않고**(시스템을 거치지 않으므로),
+**Flex Fare는 앱에서 별도로 팁이 붙어 9%대가 기록된다.** 즉 "카드만 팁이 있다"가 아니라
+"현금만 팁이 없다"가 정확한 서술이다.
+
+어느 쪽이든 `tip_amount`를 피처로 쓰면 모델은 "팁이 0이면 현금"을 외우게 되며,
+이는 예측이 아니라 정답을 베끼는 것이다. `total_amount`도 팁을 포함하므로 같은 이유로 제외한다.
+
+덧붙여 **"팁이 있는데 카드가 아니면 Flex Fare"**라는 식별 경로도 함께 생긴다.
 
 ### (b) 요금 끝자리 패턴
 
@@ -312,7 +290,22 @@ Step 6에서 다중공선성의 영향을 덜 받는 트리 기반 모델을 쓰
 `fare_amount`는 정당한 피처이므로 제외하지 않지만, Step 6에서 Flex Fare 성능이 높게 나온다면
 이 패턴에 의존했을 가능성을 함께 검토해야 한다.
 
-## 8. 피처 화이트리스트 (`features.json`)
+### (c) `VendorID` — 검증 결과 누수로 판정
+
+{table(r['leakage']['vendor_composition'])}
+
+**`VendorID == 6`인 행은 예외 없이 전부 Flex Fare다.** 원핫 인코딩하면 `VendorID_6` 컬럼이
+해당 행의 정답을 그대로 알려준다. 전체의 0.2% 미만이라 지표를 크게 흔들지는 않지만,
+누수 차단 설계가 막으려던 바로 그 경로이므로 **범주형 피처에서 제외한다.**
+
+1과 2 사이의 Flex Fare 비율 차이(약 9%p)도 작지 않다. Flex Fare만 5개 컬럼이 100% 결측이라는
+사실과 합치면, `VendorID`는 운행 특성이 아니라 **기록 경로**를 나타내는 변수로 보는 것이 자연스럽다.
+
+> 화이트리스트에 들어가는 범주형 컬럼은 이렇게 타깃과 교차표를 그려 확인한 뒤 확정한다.
+> "코드에 컬럼명을 적지 않으면 누수가 섞일 경로가 없다"는 설계는
+> 화이트리스트 자체가 검증됐을 때만 성립하기 때문이다.
+
+## 6. 피처 화이트리스트 (`features.json`)
 
 Step 6은 이 목록만 읽어 피처를 구성한다. 코드에 컬럼명을 직접 적지 않으므로
 누수 컬럼이 실수로 섞일 경로가 없다.
@@ -323,6 +316,14 @@ Step 6은 이 목록만 읽어 피처를 구성한다. 코드에 컬럼명을 �
 | 수치형 ({len(w['numeric'])}개) | `{'`, `'.join(w['numeric'])}` |
 | 범주형 ({len(w['categorical'])}개) | `{'`, `'.join(w['categorical'])}` |
 | **제외 (누수 {len(w['excluded_leakage'])}개)** | `{'`, `'.join(w['excluded_leakage'])}` |
+
+## 이 문서가 다루지 않는 것
+
+- **전체 기술통계**(평균·표준편차·분위수) — 2-3 담당
+- **상관계수** — 2-2 담당 (subset·파생변수 추출 근거로 함께 다룰 것)
+
+한때 이 파일에서 함께 생성했으나 분업 경계를 넘은 것이어서 원 담당자에게 반환했다(PR #1 리뷰).
+두 항목 모두 `features.json`에는 쓰이지 않으므로 여기서 빠져도 Step 6의 입력은 그대로다.
 
 ## 산출물
 
@@ -347,73 +348,65 @@ def main() -> None:
     print(f"  베이스라인(최빈 클래스만 예측): 정확도 {cls['baseline_accuracy']}, "
           f"macro F1 {cls['baseline_macro_f1']}")
 
-    # --- 2) 전체 기술통계 ---
-    overall = describe_overall(df)
-    print("\n[2] 전체 기술통계")
-    print(f"    {'변수':<20}{'평균':>10}{'표준편차':>10}{'중앙값':>10}{'75%':>10}")
-    for d in overall:
-        print(f"    {d['변수']:<20}{d['평균']:>10}{d['표준편차']:>10}{d['중앙값']:>10}{d['75%']:>10}")
-
-    # --- 3) 결제수단별 기술통계 ---
+    # --- 2) 결제수단별 기술통계 ---
     by_class = describe_by_class(df)
-    print("\n[3] 결제수단별 기술통계 (평균)")
+    print("\n[2] 결제수단별 기술통계 (평균)")
     print(f"    {'결제수단':<12}{'거리':>10}{'요금':>10}{'소요시간':>10}")
     for d in by_class:
         print(f"    {d['결제수단']:<12}{d['trip_distance_평균']:>10}"
               f"{d['fare_amount_평균']:>10}{d['trip_duration_min_평균']:>10}")
 
-    # --- 4) 시간 패턴 ---
+    # --- 3) 시간 패턴 ---
     hourly = composition_by(df, "pickup_hour")
     weekday = composition_by(df, "day_of_week")
-    print(f"\n[4] 시간 패턴 — 시간대 {len(hourly)}개 구간, 요일 {len(weekday)}개 집계")
+    print(f"\n[3] 시간 패턴 — 시간대 {len(hourly)}개 구간, 요일 {len(weekday)}개 집계")
     cash_by_hour = {h["pickup_hour"]: h.get("현금", 0) for h in hourly}
     hi = max(cash_by_hour, key=cash_by_hour.get)
     lo = min(cash_by_hour, key=cash_by_hour.get)
     print(f"    현금 비율이 가장 높은 시각: {hi}시 ({cash_by_hour[hi]}%) / "
           f"가장 낮은 시각: {lo}시 ({cash_by_hour[lo]}%)")
 
-    # --- 5) 지역 패턴 ---
-    zones = zone_composition(df)
-    print(f"\n[5] 지역 패턴 — 픽업 상위 {TOP_N_ZONES}개 구역")
-    print(f"    {'구역':<8}{'픽업건수':>12}{'신용카드':>10}{'Flex Fare':>12}{'현금':>8}")
+    # --- 4) 지역 패턴 ---
+    zones = zone_composition(df, "PULocationID")
+    dropoff_zones = zone_composition(df, "DOLocationID")
+    print(f"\n[4] 지역 패턴 — 승·하차 상위 {TOP_N_ZONES}개 구역")
+    print(f"    {'승차구역':<8}{'건수':>12}{'신용카드':>10}{'Flex Fare':>12}{'현금':>8}")
     for z in zones[:5]:
-        print(f"    {z['PULocationID']:<8}{z['픽업건수']:>12,}{z.get('신용카드', 0):>10}"
+        print(f"    {z['PULocationID']:<8}{z['건수']:>12,}{z.get('신용카드', 0):>10}"
               f"{z.get('Flex Fare', 0):>12}{z.get('현금', 0):>8}")
     print(f"    ... (전체 {len(zones)}개는 eda.md 참조)")
+    print(f"    하차구역 상위 {TOP_N_ZONES}개도 함께 확인 — DOLocationID를 피처로 쓰는 근거")
 
-    # --- 6) 상관계수 ---
-    corr = correlation(df)
-    print("\n[6] 상관계수 (수치형끼리만)")
-    for row in corr["matrix"]:
-        vals = "  ".join(f"{row[c]:>6}" for c in corr["columns"])
-        print(f"    {row['변수']:<20}{vals}")
-    print(f"    대각선 제외 최댓값: {corr['max_offdiag']} → 정보 중복, 트리 기반 모델 사용 근거")
-
-    # --- 7) 누수 진단 ---
+    # --- 5) 누수 진단 ---
     leak = leakage_diagnostics(df)
-    print("\n[7] 타깃 누수 진단")
+    print("\n[5] 타깃 누수 진단")
     print("    팁 > 0 비율:")
     for d in leak["tip_positive_pct"]:
-        print(f"      {d['결제수단']:<12}{d['팁>0 비율%']:>8}%")
+        print(f"      {d['결제수단']:<12}{d['팁>0 비율%']:>8}%  ({d['팁>0 건수']:,}건)")
     print("    요금이 $0.50 배수인 비율:")
     for d in leak["fare_half_dollar_pct"]:
         print(f"      {d['결제수단']:<12}{d['$0.50 배수 비율%']:>8}%")
+    print("    VendorID별 결제수단 구성비:")
+    for d in leak["vendor_composition"]:
+        print(f"      {d['VendorID']:<12}{d['건수']:>10,}건  신용카드 {d.get('신용카드', 0):>6}%  "
+              f"Flex Fare {d.get('Flex Fare', 0):>6}%  현금 {d.get('현금', 0):>6}%")
 
-    # --- 8) 피처 화이트리스트 ---
+    # --- 6) 피처 화이트리스트 ---
     whitelist = build_feature_whitelist(leakage_cols)
-    print(f"\n[8] 피처 화이트리스트 확정 — 수치형 {len(whitelist['numeric'])}개 + "
-          f"범주형 {len(whitelist['categorical'])}개, 누수 {len(leakage_cols)}개 제외")
+    print(f"\n[6] 피처 화이트리스트 확정 — 수치형 {len(whitelist['numeric'])}개 + "
+          f"범주형 {len(whitelist['categorical'])}개, "
+          f"누수 {len(whitelist['excluded_leakage'])}개 제외")
+    print(f"    범주형 제외: {', '.join(CATEGORICAL_LEAKAGE)} (5절 (c) 참조)")
     print("    검증: 화이트리스트에 누수 컬럼 없음 (assert 통과)")
 
     result = {
         "n_rows": len(df),
         "class_and_baseline": cls,
-        "describe_overall": overall,
         "describe_by_class": by_class,
         "hourly_composition": hourly,
         "weekday_composition": weekday,
         "zone_composition": zones,
-        "correlation": corr,
+        "dropoff_zone_composition": dropoff_zones,
         "leakage": leak,
     }
     (RESULT_DIR / "eda.json").write_text(

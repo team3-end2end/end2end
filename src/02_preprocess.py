@@ -50,6 +50,10 @@ LEAKAGE_COLS = [
 ]
 
 # 이상값 제거 기준. 팀 리포트와 동일한 기준을 사용해 수치를 비교 가능하게 유지한다.
+#
+# 요금에만 상한이 없는 것은 의도한 비대칭이다. 거리 200마일·소요시간 180분은 물리적으로
+# 불가능에 가까운 기록이지만, 고액 요금은 장거리·정액요금으로 실제 발생할 수 있다.
+# 꼬리도 얇다 — 99.99% 분위 $286.90, $500 초과 24건.
 MIN_FARE = 0.0
 MAX_DISTANCE = 200.0
 MAX_DURATION_MIN = 180.0
@@ -83,18 +87,19 @@ def profile_raw(df: pl.DataFrame) -> dict:
 
     # 결측이 payment_type=0에만 몰려 있는지 교차 검증한다.
     # 이것이 무작위 결측이 아니라 'Flex Fare는 미터기 세부 필드가 해당 없음'임을 보이는 근거다.
-    null_col = next(iter(nulls), None)
-    null_in_flex = (
-        int(df.filter(pl.col(null_col).is_null()).select((pl.col("payment_type") == 0).sum()).item())
-        if null_col
-        else 0
-    )
-    n_null_rows = nulls.get(null_col, 0)
+    # 결측 컬럼 전부를 검사한다 — 한 컬럼만 보고 "전부 확인했다"고 쓰면 문서가 사실과 어긋난다.
+    null_in_flex = {
+        col: int(
+            df.filter(pl.col(col).is_null()).select((pl.col("payment_type") == 0).sum()).item()
+        )
+        for col in nulls
+    }
 
     return {
         "shape": [df.height, df.width],
         "null_counts": nulls,
-        "null_all_in_flex_fare": bool(n_null_rows and null_in_flex == n_null_rows),
+        "null_in_flex_fare": null_in_flex,
+        "null_all_in_flex_fare": bool(nulls) and all(null_in_flex[c] == nulls[c] for c in nulls),
         "duplicated_rows": n_dup,
         "payment_type_distribution": dist,
     }
@@ -127,12 +132,15 @@ def clean(df: pl.DataFrame) -> tuple[pl.DataFrame, list[dict]]:
     )
 
     # 규칙별 '해당 건수'. 조건끼리 겹칠 수 있으므로 합계 ≠ 실제 제거 건수다.
+    #
+    # 각 규칙은 아래 keep 조건의 정확한 부정(negation)이어야 한다.
+    # 세는 기준과 지우는 기준이 어긋나면 경계값 행이 제거되고도 어느 규칙에도 잡히지 않는다.
     rules = [
         ("요금 ≤ 0", pl.col("fare_amount") <= MIN_FARE),
         ("이동거리 ≤ 0", pl.col("trip_distance") <= 0),
-        (f"이동거리 > {MAX_DISTANCE:.0f}마일", pl.col("trip_distance") > MAX_DISTANCE),
+        (f"이동거리 ≥ {MAX_DISTANCE:.0f}마일", pl.col("trip_distance") >= MAX_DISTANCE),
         ("소요시간 ≤ 0분", pl.col("trip_duration_min") <= 0),
-        (f"소요시간 > {MAX_DURATION_MIN:.0f}분", pl.col("trip_duration_min") > MAX_DURATION_MIN),
+        (f"소요시간 ≥ {MAX_DURATION_MIN:.0f}분", pl.col("trip_duration_min") >= MAX_DURATION_MIN),
     ]
 
     n_before = df.height
@@ -214,7 +222,8 @@ def write_markdown(r: dict) -> None:
 
 {table([{'컬럼': k, '결측건수': v} for k, v in r['raw']['null_counts'].items()])}
 
-**이 결측 행이 전부 `payment_type=0`(Flex Fare)인지 교차 검증한 결과: {'일치함' if r['raw']['null_all_in_flex_fare'] else '불일치'}.**
+**{len(r['raw']['null_counts'])}개 컬럼 전부에 대해** 결측 행이 모두 `payment_type=0`(Flex Fare)인지
+교차 검증한 결과: **{'일치함' if r['raw']['null_all_in_flex_fare'] else '불일치'}.**
 따라서 이는 무작위 결측이 아니라, Flex Fare가 앱 기반 사전 확정요금이라
 미터기 세부 요금 필드가 **애초에 해당 없음**을 의미한다. 채우거나 지울 대상이 아니다.
 
@@ -238,7 +247,7 @@ def write_markdown(r: dict) -> None:
 | `trip_duration_min` | 하차 − 승차 (분) | 원본에 소요시간이 없다 |
 | `pickup_hour` | 승차 시각의 '시' (0~23) | 시간대별 패턴을 보기 위해 |
 | `day_of_week` | 요일 (월=1 … 일=7) | 평일과 주말의 이동 성격이 다르다 |
-| `is_weekend` | 주말 여부 | 위와 동일, 이진 피처로 |
+| `is_weekend` | 주말 여부 | 사람이 읽는 요약용. **모델 피처로는 쓰지 않는다** — `day_of_week`에서 완전히 유도되므로 정보 중복 (Step 3의 `features.json` 참조) |
 | `payment_label` | 결제수단 이름 | 0/1/2 코드를 읽을 수 있게 |
 
 ## 3. 정제 후 클래스 분포 (검증용)

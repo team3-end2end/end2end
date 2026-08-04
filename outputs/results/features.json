@@ -9,8 +9,7 @@
     "PULocationID",
     "DOLocationID",
     "pickup_hour",
-    "day_of_week",
-    "VendorID"
+    "day_of_week"
   ],
   "excluded_leakage": [
     "tip_amount",
@@ -19,7 +18,8 @@
     "Airport_fee",
     "RatecodeID",
     "passenger_count",
-    "store_and_fwd_flag"
+    "store_and_fwd_flag",
+    "VendorID"
   ],
   "excluded_reason": {
     "tip_amount": "현금 팁은 미기록 — 결제수단을 그대로 노출",
@@ -28,6 +28,8 @@
     "Airport_fee": "위와 동일",
     "RatecodeID": "위와 동일",
     "passenger_count": "위와 동일",
-    "store_and_fwd_flag": "위와 동일"
+    "store_and_fwd_flag": "위와 동일",
+    "VendorID": "VendorID=6인 6,614행이 예외 없이 전부 Flex Fare — 원핫 시 정답을 그대로 노출",
+    "is_weekend": "day_of_week에서 완전히 유도되므로 정보 중복 (요일별 고유값 1개)"
   }
 }

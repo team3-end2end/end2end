@@ -11,6 +11,13 @@
       "congestion_surcharge": 955371,
       "Airport_fee": 955371
     },
+    "null_in_flex_fare": {
+      "passenger_count": 955371,
+      "RatecodeID": 955371,
+      "store_and_fwd_flag": 955371,
+      "congestion_surcharge": 955371,
+      "Airport_fee": 955371
+    },
     "null_all_in_flex_fare": true,
     "duplicated_rows": 0,
     "payment_type_distribution": [
@@ -50,7 +57,7 @@
       "비율%": 2.642
     },
     {
-      "규칙": "이동거리 > 200마일",
+      "규칙": "이동거리 ≥ 200마일",
       "해당건수": 73,
       "비율%": 0.002
     },
@@ -60,7 +67,7 @@
       "비율%": 1.266
     },
     {
-      "규칙": "소요시간 > 180분",
+      "규칙": "소요시간 ≥ 180분",
       "해당건수": 1404,
       "비율%": 0.035
     }
