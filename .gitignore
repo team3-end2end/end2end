@@ -3,7 +3,6 @@
 data/
 
 # 실행 산출물 중 중간 파일 — 용량이 크고 재현 가능하므로 커밋하지 않는다
-outputs/cleaned.parquet
 outputs/model/
 
 # 단, 제출 대상인 report.md / 차트 / 결과 JSON은 커밋한다

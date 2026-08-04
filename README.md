@@ -12,13 +12,16 @@
 
 ## 데이터
 
-원본은 용량(66.5MB) 때문에 커밋하지 않는다. 아래에서 받아 `data/`에 둔다.
+원본은 용량(66.5MB) 때문에 커밋하지 않는다. 아래에서 받아 `data/raw/`에 둔다.
 
 ```bash
-mkdir -p data
-curl -o data/yellow_tripdata_2026-05.parquet \
+mkdir -p data/raw data/processed
+curl -o data/raw/yellow_tripdata_2026-05.parquet \
   https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet
 ```
+
+- `data/raw/` — 원본. **읽기 전용, 절대 덮어쓰지 않는다**
+- `data/processed/` — 전처리 결과 (`cleaned.parquet`, Step 2가 생성)
 
 ## 실행
 

@@ -22,7 +22,7 @@ plan.md와 충돌하는 판단이 필요하면 임의로 진행하지 말고 PR 
 | 담당 | 소유 파일 | 산출물 |
 |---|---|---|
 | Step 1 | `src/01_load_compare.py` | `outputs/results/load_compare.json` |
-| Step 2 | `src/02_clean_eda.py` | `outputs/figures/*`, `outputs/cleaned.parquet`, `outputs/results/eda.json` |
+| Step 2 | `src/02_clean_eda.py` | `outputs/figures/*`, `data/processed/cleaned.parquet`, `outputs/results/eda.json` |
 | Step 3 | `src/03_stats.py` | `outputs/results/stats.json` |
 | Step 4 | `src/04_ml_pipeline.py` | `outputs/model/*.joblib`, `outputs/results/ml.json` |
 | Step 5 | `src/05_report.py` | `outputs/report.md` |

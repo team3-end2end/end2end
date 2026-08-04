@@ -1,0 +1,82 @@
+{
+  "file": "yellow_tripdata_2026-05.parquet",
+  "file_size_mb": 66.5,
+  "n_runs": 3,
+  "pandas": {
+    "load_time_sec": 0.232,
+    "times": [
+      0.232,
+      0.185,
+      0.238
+    ],
+    "memory_mb": 580.6,
+    "shape": [
+      4090836,
+      20
+    ]
+  },
+  "polars": {
+    "load_time_sec": 0.157,
+    "times": [
+      0.259,
+      0.157,
+      0.135
+    ],
+    "memory_mb": 550.1,
+    "shape": [
+      4090836,
+      20
+    ]
+  },
+  "speedup": 1.48,
+  "memory_ratio": 1.06,
+  "transform": {
+    "description": "payment_type 필터 + 파생변수 3개 + 시간대별 집계",
+    "pandas_sec": 0.172,
+    "polars_sec": 0.039,
+    "pandas_times": [
+      0.191,
+      0.172,
+      0.172
+    ],
+    "polars_times": [
+      0.04,
+      0.039,
+      0.036
+    ],
+    "speedup": 4.46,
+    "results_match": true
+  },
+  "equivalence": {
+    "shape_match": true,
+    "columns_match": true,
+    "null_counts_match": true,
+    "aggregates_match": true,
+    "pandas_shape": [
+      4090836,
+      20
+    ],
+    "polars_shape": [
+      4090836,
+      20
+    ],
+    "null_counts": {
+      "passenger_count": 955371,
+      "RatecodeID": 955371,
+      "store_and_fwd_flag": 955371,
+      "congestion_surcharge": 955371,
+      "Airport_fee": 955371
+    },
+    "aggregates": {
+      "fare_amount_sum": 88006959.59,
+      "trip_distance_max": 307491.47
+    }
+  },
+  "environment": {
+    "python": "3.11.15",
+    "pandas": "3.0.3",
+    "polars": "1.43.2",
+    "platform": "Darwin arm64",
+    "cpu_count": 12
+  }
+}

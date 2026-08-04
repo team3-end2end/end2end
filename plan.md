@@ -57,7 +57,9 @@
 ├── AGENTS.md                # 에이전트·팀원 작업 규약 (PR, 파일 소유권)
 ├── .github/
 │   └── pull_request_template.md
-├── data/                    # 원본 parquet (gitignore, README 참고해 각자 다운로드)
+├── data/                    # gitignore — 각자 로컬에 둔다 (README 참고)
+│   ├── raw/                 # 원본 parquet. 읽기 전용, 절대 덮어쓰지 않는다
+│   └── processed/           # 전처리 결과 (cleaned.parquet)
 ├── src/
 │   ├── 01_load_compare.py   # Pandas vs Polars 로딩 비교
 │   ├── 02_clean_eda.py      # 결측치·중복·이상치 처리 + EDA + 시각화
@@ -104,7 +106,7 @@
 **산출물**
 - `outputs/figures/seaborn_fare_by_payment.png`
 - `outputs/figures/plotly_hourly_payment.html`
-- 정제된 데이터: `outputs/cleaned.parquet` (이후 단계 입력)
+- 정제된 데이터: `data/processed/cleaned.parquet` (Step 3·4의 입력)
 - `outputs/results/eda.json` — 결측치 수, 정제 전후 행 수 등
 
 **검증**: 정제 후 payment_type이 {1,2}만 남았는지, 차트 파일 2개 존재 확인
