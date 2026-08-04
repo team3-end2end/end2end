@@ -1,6 +1,6 @@
 # End2End 데이터 분석 프로젝트 — 결제수단 예측 (NYC Yellow Taxi)
 
-> **주제**: 2026년 5월 NYC Yellow Taxi 데이터로 승객의 결제수단(카드 vs 현금) 예측
+> **주제**: 2026년 5월 NYC Yellow Taxi 데이터로 결제수단(신용카드 / 현금 / Flex Fare) 예측
 > **데이터**: `yellow_tripdata_2026-05.parquet` (4,090,836행 × 20컬럼, 66.5MB)
 > **마감**: 과정 종료 시까지 (~21:00 제출 엄수, 초과 시 감점)
 

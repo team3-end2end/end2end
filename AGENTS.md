@@ -5,8 +5,9 @@
 
 ## 프로젝트
 
-NYC Yellow Taxi 2026-05 데이터로 **결제수단(카드 vs 현금) 예측**하는 End2End 분석 과제.
+NYC Yellow Taxi 2026-05 데이터로 **결제수단(신용카드 / 현금 / Flex Fare) 3-클래스 예측**하는 End2End 분석 과제.
 과제 요구사항·채점 기준·단계별 산출물은 **[plan.md](plan.md)가 단일 기준(single source of truth)**이다.
+판단이 바뀐 경위는 [WORKLOG.md](WORKLOG.md)에 남긴다 — 번복된 판단도 지우지 않는다.
 plan.md와 충돌하는 판단이 필요하면 임의로 진행하지 말고 PR 본문에 "plan.md와 다른 선택" 항목으로 명시한다.
 
 ## 시작 전 확인
