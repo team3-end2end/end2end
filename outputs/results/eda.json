@@ -1,0 +1,164 @@
+{
+  "raw": {
+    "shape": [
+      4090836,
+      20
+    ],
+    "null_counts": {
+      "passenger_count": 955371,
+      "RatecodeID": 955371,
+      "store_and_fwd_flag": 955371,
+      "congestion_surcharge": 955371,
+      "Airport_fee": 955371
+    },
+    "null_all_in_flex_fare": true,
+    "duplicated_rows": 0,
+    "payment_type_distribution": [
+      {
+        "payment_type": 0,
+        "건수": 955371
+      },
+      {
+        "payment_type": 1,
+        "건수": 2727585
+      },
+      {
+        "payment_type": 2,
+        "건수": 372909
+      },
+      {
+        "payment_type": 3,
+        "건수": 11984
+      },
+      {
+        "payment_type": 4,
+        "건수": 22987
+      }
+    ]
+  },
+  "excluded_minor_classes": 34971,
+  "after_select": 4055865,
+  "rule_counts": [
+    {
+      "규칙": "요금 ≤ 0",
+      "해당건수": 6087,
+      "비율%": 0.15
+    },
+    {
+      "규칙": "이동거리 ≤ 0",
+      "해당건수": 107168,
+      "비율%": 2.642
+    },
+    {
+      "규칙": "이동거리 > 200마일",
+      "해당건수": 73,
+      "비율%": 0.002
+    },
+    {
+      "규칙": "소요시간 ≤ 0분",
+      "해당건수": 51367,
+      "비율%": 1.266
+    },
+    {
+      "규칙": "소요시간 > 180분",
+      "해당건수": 1404,
+      "비율%": 0.035
+    }
+  ],
+  "cleaned": {
+    "shape": [
+      3891795,
+      25
+    ]
+  },
+  "retention_pct": 95.1,
+  "class_distribution": [
+    {
+      "payment_label": "신용카드",
+      "건수": 2660566,
+      "비율%": 68.36
+    },
+    {
+      "payment_label": "Flex Fare",
+      "건수": 878255,
+      "비율%": 22.57
+    },
+    {
+      "payment_label": "현금",
+      "건수": 352974,
+      "비율%": 9.07
+    }
+  ],
+  "majority_baseline_acc": 0.6836,
+  "describe_by_payment": [
+    {
+      "payment_label": "신용카드",
+      "건수": 2660566,
+      "거리평균": 3.43,
+      "거리표준편차": 4.46,
+      "요금평균": 20.27,
+      "요금표준편차": 17.75,
+      "소요시간평균": 18.89,
+      "소요시간표준편차": 16.71
+    },
+    {
+      "payment_label": "Flex Fare",
+      "건수": 878255,
+      "거리평균": 3.82,
+      "거리표준편차": 3.36,
+      "요금평균": 25.59,
+      "요금표준편차": 14.12,
+      "소요시간평균": 19.26,
+      "소요시간표준편차": 10.72
+    },
+    {
+      "payment_label": "현금",
+      "건수": 352974,
+      "거리평균": 3.43,
+      "거리표준편차": 4.77,
+      "요금평균": 20.36,
+      "요금표준편차": 20.47,
+      "소요시간평균": 17.13,
+      "소요시간표준편차": 15.11
+    }
+  ],
+  "fare_ending_pattern": [
+    {
+      "payment_label": "Flex Fare",
+      "$0.50배수비율%": 2.7
+    },
+    {
+      "payment_label": "현금",
+      "$0.50배수비율%": 23.7
+    },
+    {
+      "payment_label": "신용카드",
+      "$0.50배수비율%": 27.2
+    }
+  ],
+  "figures": {
+    "seaborn": "outputs/figures/seaborn_distance_by_payment.png",
+    "plotly": "outputs/figures/plotly_hourly_payment_mix.html"
+  },
+  "leakage_cols": [
+    "tip_amount",
+    "total_amount",
+    "congestion_surcharge",
+    "Airport_fee",
+    "RatecodeID",
+    "passenger_count",
+    "store_and_fwd_flag"
+  ],
+  "remaining_nulls": {
+    "total": 4391275,
+    "columns": {
+      "passenger_count": 878255,
+      "RatecodeID": 878255,
+      "store_and_fwd_flag": 878255,
+      "congestion_surcharge": 878255,
+      "Airport_fee": 878255
+    },
+    "flex_fare_rows": 878255,
+    "explained_as_not_applicable": true
+  }
+}
