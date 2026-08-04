@@ -1,0 +1,29 @@
+# 데이터 — 원본 parquet은 66MB, 리포에 커밋하지 않는다 (링크는 plan.md 참조)
+*.parquet
+data/
+
+# 실행 산출물 중 중간 파일 — 용량이 크고 재현 가능하므로 커밋하지 않는다
+outputs/cleaned.parquet
+outputs/model/
+
+# 단, 제출 대상인 report.md / 차트 / 결과 JSON은 커밋한다
+# (제출 방식이 "GitHub 폴더 구조 그대로 다운로드 후 압축"이므로 리포에 남아 있어야 함)
+
+# 모델 바이너리
+*.joblib
+*.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# 에디터 · OS
+.DS_Store
+.vscode/
+.idea/
+
+# Conductor 워크스페이스 로컬 파일
+.context/

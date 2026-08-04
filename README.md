@@ -1,1 +1,41 @@
-# end2end
+# end2end — NYC Yellow Taxi 결제수단 예측
+
+2026년 5월 NYC Yellow Taxi 운행 데이터로 승객의 **결제수단(카드 vs 현금)** 을 예측하는 End2End 분석 프로젝트.
+
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [plan.md](plan.md) | 과제 요구사항, 채점 기준, 단계별 Task·산출물 — **작업의 단일 기준** |
+| [AGENTS.md](AGENTS.md) | 에이전트·팀원 작업 규약 (파일 소유권, 브랜치, PR, 코드 규칙) |
+| [.github/pull_request_template.md](.github/pull_request_template.md) | PR 본문 형식 (의사결정 TL;DR + 근거) |
+
+## 데이터
+
+원본은 용량(66.5MB) 때문에 커밋하지 않는다. 아래에서 받아 `data/`에 둔다.
+
+```bash
+mkdir -p data
+curl -o data/yellow_tripdata_2026-05.parquet \
+  https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet
+```
+
+## 실행
+
+```bash
+pip install -r requirements.txt
+
+python src/01_load_compare.py   # Pandas vs Polars 로딩 비교
+python src/02_clean_eda.py      # 정제 + EDA + 시각화
+python src/03_stats.py          # 기술통계 · 상관계수 · t-test
+python src/04_ml_pipeline.py    # sklearn Pipeline 학습 · 평가 · 저장
+python src/05_report.py         # outputs/report.md 자동 생성
+```
+
+각 스크립트는 단독 실행 가능하되, 앞 단계 산출물에 의존하는 경우 순서대로 실행해야 한다.
+
+## 협업
+
+1. 브랜치를 판다: `<이름>/<step>-<요약>`
+2. 작업 전 [AGENTS.md](AGENTS.md)를 읽는다 (에이전트 사용 시에도 동일)
+3. PR 템플릿을 채워 PR을 연다 — **이번 브랜치에서 내린 의사결정과 그 근거**가 핵심
