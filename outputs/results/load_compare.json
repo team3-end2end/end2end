@@ -3,11 +3,11 @@
   "file_size_mb": 66.5,
   "n_runs": 3,
   "pandas": {
-    "load_time_sec": 0.232,
+    "load_time_sec": 0.182,
     "times": [
-      0.232,
-      0.185,
-      0.238
+      0.107,
+      0.182,
+      0.204
     ],
     "memory_mb": 580.6,
     "shape": [
@@ -16,11 +16,11 @@
     ]
   },
   "polars": {
-    "load_time_sec": 0.157,
+    "load_time_sec": 0.112,
     "times": [
-      0.259,
-      0.157,
-      0.135
+      0.051,
+      0.128,
+      0.112
     ],
     "memory_mb": 550.1,
     "shape": [
@@ -28,23 +28,23 @@
       20
     ]
   },
-  "speedup": 1.48,
+  "speedup": 1.62,
   "memory_ratio": 1.06,
   "transform": {
     "description": "payment_type 필터 + 파생변수 3개 + 시간대별 집계",
     "pandas_sec": 0.172,
-    "polars_sec": 0.039,
+    "polars_sec": 0.041,
     "pandas_times": [
-      0.191,
-      0.172,
+      0.257,
+      0.162,
       0.172
     ],
     "polars_times": [
-      0.04,
-      0.039,
-      0.036
+      0.062,
+      0.041,
+      0.039
     ],
-    "speedup": 4.46,
+    "speedup": 4.17,
     "results_match": true
   },
   "equivalence": {

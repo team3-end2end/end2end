@@ -180,6 +180,15 @@ def write_markdown(result: dict) -> None:
 - 측정 방식: 워밍업 1회 후 **{result['n_runs']}회 반복, 중앙값** 사용
 - 양쪽 모두 즉시 실행(`read_parquet`)으로 맞춤 — Polars의 `scan_parquet`은 지연 실행이라 비교 대상이 아님
 
+## 0. 두 라이브러리는 무엇인가
+
+- **Pandas** — 파이썬에서 표 형태 데이터를 다루는 표준 도구. 오래된 만큼 자료가 많고,
+  seaborn·scipy·scikit-learn이 모두 Pandas 객체를 입력으로 받는다.
+- **Polars** — 같은 일을 하는 최신 도구. 여러 CPU 코어를 동시에 활용해 데이터가 클수록 유리하다.
+
+즉 **Pandas는 표준이라 어디든 연결되고, Polars는 빨라서 큰 데이터에 유리하다.**
+따라서 이 비교의 목적은 둘 중 하나를 고르는 것이 아니라, 각자 유리한 구간을 나누는 것이다.
+
 ## 1. 로딩 성능 비교
 
 | 항목 | Pandas | Polars | 차이 |
