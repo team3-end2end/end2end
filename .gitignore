@@ -1,2 +1,5 @@
 data/
 *.pdf
+.venv/
+eda/123/
+.DS_Store
