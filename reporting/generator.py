@@ -64,11 +64,31 @@ def _validate_cross_stage(results: dict[str, dict[str, Any]]) -> None:
     evaluation = results["evaluation"]
     if model["status"] != "complete" or evaluation["status"] != "complete":
         return
-    candidate_ids = {item["id"] for item in model["data"]["candidates"]}
-    result_ids = {item["model_id"] for item in evaluation["data"]["model_results"]}
-    unknown = sorted(result_ids - candidate_ids)
-    if unknown:
-        raise ContractError(f"Evaluation references unknown model candidates: {unknown}")
+    model_id = model["data"]["model"]["id"]
+    evaluation_model_id = evaluation["data"]["model_id"]
+    if model_id != evaluation_model_id:
+        raise ContractError(
+            f"Evaluation model_id {evaluation_model_id!r} does not match model {model_id!r}"
+        )
+
+    preprocessing = results["preprocessing"]
+    if preprocessing["status"] == "complete":
+        split = model["data"]["split"]
+        split_total = sum(
+            split[key] for key in ("train_samples", "validation_samples", "test_samples")
+        )
+        output_rows = preprocessing["data"]["output_shape"]["rows"]
+        if split_total != output_rows:
+            raise ContractError(
+                f"Model split total {split_total} does not match preprocessing rows {output_rows}"
+            )
+
+    test_samples = model["data"]["split"]["test_samples"]
+    evaluated_samples = sum(item["support"] for item in evaluation["data"]["class_metrics"])
+    if evaluated_samples != test_samples:
+        raise ContractError(
+            f"Evaluation support total {evaluated_samples} does not match test samples {test_samples}"
+        )
 
 
 def _display(value: Any, fallback: str = "준비 중") -> Any:
@@ -117,18 +137,36 @@ def _context(stages: dict[str, dict[str, Any]], output_dir: Path, example: bool)
         context[stage] = result["data"] if result["status"] == "complete" else {}
 
     # Markdown에는 상대 경로를, 단일 HTML에는 같은 이미지를 data URI로 제공한다.
-    figures = context["eda"].get("figures", [])
-    normalized_figures = []
-    for figure in figures:
-        item = dict(figure)
-        source = Path(item["path"])
-        item["exists"] = source.is_file()
-        item["markdown_path"] = os.path.relpath(source, output_dir)
-        item["data_uri"] = _data_uri(source) if item["exists"] else None
-        normalized_figures.append(item)
-    if context["eda"]:
-        context["eda"] = dict(context["eda"])
-        context["eda"]["figures"] = normalized_figures
+    for stage_name in ("eda", "evaluation"):
+        figures = context[stage_name].get("figures", [])
+        normalized_figures = []
+        for figure in figures:
+            item = dict(figure)
+            source = Path(item["path"])
+            item["exists"] = source.is_file()
+            item["markdown_path"] = os.path.relpath(source, output_dir)
+            item["data_uri"] = _data_uri(source) if item["exists"] else None
+            normalized_figures.append(item)
+        if context[stage_name]:
+            context[stage_name] = dict(context[stage_name])
+            context[stage_name]["figures"] = normalized_figures
+
+    # 혼동행렬 PNG는 행렬 수치와 함께 전달되므로 일반 평가 그림과 별도로 정규화한다.
+    if context["evaluation"]:
+        confusion_matrix = dict(context["evaluation"]["confusion_matrix"])
+        figure_path = confusion_matrix.get("figure_path")
+        if figure_path:
+            source = Path(figure_path)
+            confusion_matrix["figure"] = {
+                "path": figure_path,
+                "exists": source.is_file(),
+                "markdown_path": os.path.relpath(source, output_dir),
+                "data_uri": _data_uri(source) if source.is_file() else None,
+            }
+        else:
+            confusion_matrix["figure"] = None
+        context["evaluation"] = dict(context["evaluation"])
+        context["evaluation"]["confusion_matrix"] = confusion_matrix
     return context
 
 

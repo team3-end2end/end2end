@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -103,3 +104,17 @@ def test_tracked_example_renders_complete_sample(tmp_path):
     assert "SAMPLE" in html
     assert "data:image/png;base64," in html
     assert "reporting/examples/data" not in html
+    for forbidden in ("선정 근거", "주요 발견", "한계 및 후속 작업", "결론"):
+        assert forbidden not in markdown
+        assert forbidden not in html
+
+
+def test_evaluation_must_reference_the_trained_model(tmp_path):
+    inputs = tmp_path / "inputs"
+    shutil.copytree("reporting/examples/data", inputs)
+    evaluation_path = inputs / "evaluation.json"
+    evaluation = json.loads(evaluation_path.read_text(encoding="utf-8"))
+    evaluation["data"]["model_id"] = "different-model"
+    evaluation_path.write_text(json.dumps(evaluation), encoding="utf-8")
+    with pytest.raises(ContractError, match="does not match model"):
+        generate_reports(inputs, tmp_path / "outputs", strict=True)

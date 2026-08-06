@@ -45,12 +45,6 @@
     th { color: #475569; background: #f8fafc; font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; }
     tr:last-child td { border-bottom: 0; }
     .number { text-align: right; font-variant-numeric: tabular-nums; }
-    .finding { padding: 17px 18px; border-left: 4px solid var(--primary); border-radius: 10px; background: var(--primary-soft); }
-    .finding + .finding { margin-top: 10px; }
-    .finding.warning { border-left-color: #f59e0b; background: #fffbeb; }
-    .finding.critical { border-left-color: var(--danger); background: #fff1f0; }
-    .finding strong { display: block; margin-bottom: 4px; }
-    .finding small { display: block; margin-top: 8px; color: var(--muted); }
     .figures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
     figure { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
     figure img { display: block; width: 100%; height: auto; }
@@ -71,30 +65,30 @@
     <header class="hero">
       <p class="eyebrow">Data &amp; Model Report</p>
       <h1>데이터 분석 및 모델링 보고서</h1>
-      <p>분석 파이프라인이 완료되면 핵심 결과와 해석이 자동으로 채워집니다.</p>
+      <p>파이프라인이 완료되면 실행 결과 수치와 이미지가 자동으로 채워집니다.</p>
     </header>
 
     <section class="section">
-      <div class="section-head"><div><h2>한눈에 보기</h2><p class="lead">현재 파이프라인 상태와 가장 중요한 숫자입니다.</p></div><span class="badge pending">준비 중</span></div>
+      <div class="section-head"><div><h2>실행 결과 요약</h2><p class="lead">현재 파이프라인 상태와 자동 계산된 주요 수치입니다.</p></div><span class="badge pending">준비 중</span></div>
       <div class="grid">
         <div class="card"><div class="label">원본 데이터</div><div class="value">준비 중</div></div>
         <div class="card"><div class="label">데이터 유지율</div><div class="value">준비 중</div></div>
-        <div class="card"><div class="label">최종 모델</div><div class="value">준비 중</div></div>
-        <div class="card"><div class="label">주요 성능</div><div class="value">준비 중</div></div>
+        <div class="card"><div class="label">모델</div><div class="value">준비 중</div></div>
+        <div class="card"><div class="label">Macro F1</div><div class="value">준비 중</div></div>
       </div>
     </section>
 
     <section class="section">
-      <div class="section-head"><div><h2>데이터 이해</h2><p class="lead">어떤 데이터를 사용했고, 분석 전에 무엇을 발견했는지 설명합니다.</p></div><span class="badge pending">준비 중</span></div>
-<div class="pending-panel">EDA가 완료되면 데이터 품질, 결제수단 분포와 주요 발견이 표시됩니다.</div>    </section>
+      <div class="section-head"><div><h2>데이터 통계</h2><p class="lead">입력 데이터의 구조, 결측 현황과 클래스 분포입니다.</p></div><span class="badge pending">준비 중</span></div>
+<div class="pending-panel">EDA가 완료되면 데이터 구조, 결측, 클래스 분포와 시각화가 표시됩니다.</div>    </section>
 
     <section class="section">
       <div class="section-head"><div><h2>데이터 준비</h2><p class="lead">모델이 학습할 수 있도록 어떤 데이터를 남기고 바꿨는지 보여줍니다.</p></div><span class="badge pending">준비 중</span></div>
 <div class="pending-panel">전처리가 완료되면 데이터 유지율, 필터 이력과 선택 피처가 표시됩니다.</div>    </section>
 
     <section class="section">
-      <div class="section-head"><div><h2>모델 비교</h2><p class="lead">전체 정확도뿐 아니라 모든 결제수단을 고르게 구분하는지를 비교합니다.</p></div><span class="badge pending">준비 중</span></div>
-<div class="pending-panel">모델 학습과 평가가 완료되면 후보 비교, 클래스별 성능과 최종 결론이 표시됩니다.</div>    </section>
+      <div class="section-head"><div><h2>모델 정보 및 평가</h2><p class="lead">학습된 단일 모델의 설정과 자동 계산된 평가 지표입니다.</p></div><span class="badge pending">준비 중</span></div>
+<div class="pending-panel">모델 학습과 평가가 완료되면 모델 설정, 전체·클래스별 지표와 혼동행렬이 표시됩니다.</div>    </section>
     <footer>이 문서는 <code>python -m reporting.generate</code>로 자동 생성되었습니다.</footer>
   </main>
 </body>

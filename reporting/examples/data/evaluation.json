@@ -4,29 +4,15 @@
   "status": "complete",
   "generated_at": "2026-08-06T10:00:00+09:00",
   "data": {
-    "primary_metric": "macro_f1",
-    "model_results": [
-      {
-        "model_id": "logistic_regression",
-        "accuracy": 0.714,
-        "macro_precision": 0.581,
-        "macro_recall": 0.623,
-        "macro_f1": 0.592,
-        "weighted_f1": 0.728,
-        "cv_mean": 0.588,
-        "cv_std": 0.006
-      },
-      {
-        "model_id": "random_forest",
-        "accuracy": 0.891,
-        "macro_precision": 0.781,
-        "macro_recall": 0.742,
-        "macro_f1": 0.756,
-        "weighted_f1": 0.885,
-        "cv_mean": 0.749,
-        "cv_std": 0.004
-      }
-    ],
+    "model_id": "random_forest",
+    "metrics": {
+      "accuracy": 0.891,
+      "macro_precision": 0.781,
+      "macro_recall": 0.742,
+      "macro_f1": 0.756,
+      "weighted_f1": 0.885
+    },
+    "cross_validation": {"metric": "macro_f1", "mean": 0.749, "std": 0.004, "folds": 5},
     "class_metrics": [
       {"label": "신용카드", "precision": 0.938, "recall": 0.940, "f1": 0.939, "support": 399010},
       {"label": "Flex Fare", "precision": 0.789, "recall": 0.850, "f1": 0.818, "support": 131739},
@@ -37,13 +23,7 @@
       "values": [[375000, 20000, 4010], [15000, 112000, 4739], [10000, 10000, 32940]],
       "figure_path": null
     },
-    "selected_model_id": "random_forest",
-    "selection_reason": "전체 정확도뿐 아니라 소수 클래스인 현금의 재현율과 Macro F1이 가장 높아 결제수단을 비교적 고르게 구분했습니다.",
-    "limitations": [
-      "이 모델과 평가 수치는 보고서 화면 검증을 위한 가상 예시입니다.",
-      "카드와 현금은 요금·거리 분포가 겹쳐 실제 성능이 예시보다 낮을 수 있습니다.",
-      "VendorID 의존도를 확인하기 위한 제외 후 재학습이 필요합니다."
-    ]
+    "figures": []
   },
   "error": null
 }

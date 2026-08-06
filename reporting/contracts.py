@@ -59,6 +59,9 @@ def _validate_semantics(result: Mapping[str, Any]) -> None:
         total_ratio = sum(item["ratio"] for item in data["class_distribution"])
         if not 0.999 <= total_ratio <= 1.001:
             problems.append(f"class_distribution ratios must sum to 1 (got {total_ratio:.6f})")
+        reported_missing = sum(item["count"] for item in data["missing_by_column"])
+        if reported_missing != data["missing_cell_count"]:
+            problems.append("missing_by_column counts must sum to missing_cell_count")
 
     if stage == "preprocessing":
         # 각 필터의 제거 수와 다음 필터로 이어지는 행 수가 맞아야 한다.
@@ -70,19 +73,8 @@ def _validate_semantics(result: Mapping[str, Any]) -> None:
             if filters[index - 1]["after_rows"] != filters[index]["before_rows"]:
                 problems.append(f"filters[{index}] does not continue from the previous filter")
 
-    if stage == "model":
-        # 평가 결과가 모델을 ID로 참조하므로 후보 ID 중복을 허용하지 않는다.
-        identifiers = [item["id"] for item in data["candidates"]]
-        if len(identifiers) != len(set(identifiers)):
-            problems.append("model candidate ids must be unique")
-
     if stage == "evaluation":
-        # 최종 모델과 혼동행렬이 평가 표의 모델·클래스 정의를 그대로 참조하는지 확인한다.
-        identifiers = [item["model_id"] for item in data["model_results"]]
-        if len(identifiers) != len(set(identifiers)):
-            problems.append("model result ids must be unique")
-        if data["selected_model_id"] not in identifiers:
-            problems.append("selected_model_id must reference a model result")
+        # 혼동행렬과 클래스별 지표가 같은 클래스 순서와 크기를 사용하는지 확인한다.
         labels = data["confusion_matrix"]["labels"]
         values = data["confusion_matrix"]["values"]
         if len(values) != len(labels) or any(len(row) != len(labels) for row in values):
@@ -90,6 +82,10 @@ def _validate_semantics(result: Mapping[str, Any]) -> None:
         metric_labels = [item["label"] for item in data["class_metrics"]]
         if metric_labels != labels:
             problems.append("class_metrics labels must match confusion_matrix labels and order")
+        row_totals = [sum(row) for row in values]
+        supports = [item["support"] for item in data["class_metrics"]]
+        if len(row_totals) == len(supports) and row_totals != supports:
+            problems.append("confusion_matrix row totals must match class_metrics support")
 
     if problems:
         raise ContractError("Invalid report stage result:\n- " + "\n- ".join(problems))

@@ -50,14 +50,14 @@
 | 준비 중 | — | — |
 {% endfor %}
 
-### 주요 발견
+### 컬럼별 결측
 
-| 중요도 | 발견 | 근거 | 조치 |
-|---|---|---|---|
-{% for item in eda.findings %}
-| {{ item.severity }} | **{{ item.title }}** — {{ item.description }} | {{ item.evidence }} | {{ item.action }} |
+| 컬럼 | 결측 수 | 결측률 |
+|---|---:|---:|
+{% for item in eda.missing_by_column %}
+| `{{ item.column }}` | {{ item.count | integer }} | {{ item.ratio | percent(2) }} |
 {% else %}
-| — | 준비 중 | — | — |
+| 결측 컬럼 없음 | 0 | 0.00% |
 {% endfor %}
 
 ### 시각화
@@ -67,15 +67,13 @@
 {% if figure.exists %}
 ![{{ figure.alt }}]({{ figure.markdown_path }})
 {% else %}
-> 이미지 준비 중: `{{ figure.path }}`
+> 시각화 파일 없음: `{{ figure.path }}`
 {% endif %}
-
-{{ figure.caption }}
 {% else %}
 시각화가 등록되지 않았습니다.
 {% endfor %}
 {% else %}
-데이터 품질, 클래스 분포, 주요 발견과 시각화가 입력되면 표시됩니다.
+데이터 품질, 클래스 분포, 컬럼별 결측과 시각화가 입력되면 표시됩니다.
 {% endif %}
 
 ## 3. 전처리 결과
@@ -102,19 +100,19 @@
 - 선택 피처: {{ preprocessing.selected_features | join(', ') | display }}
 - 제외 피처:
 {% for item in preprocessing.excluded_features %}
-  - `{{ item.name }}`: {{ item.reason }}
+  - `{{ item }}`
 {% else %}
   - 없음
 {% endfor %}
 - 파생 피처:
 {% for item in preprocessing.derived_features %}
-  - `{{ item.name }}`: {{ item.reason }}
+  - `{{ item }}`
 {% else %}
   - 없음
 {% endfor %}
 - 변환:
 {% for item in preprocessing.transformations %}
-  - `{{ item.name }}`: {{ item.reason }}
+  - `{{ item.name }}` · 컬럼: {{ item.columns | join(', ') | display }} · 파라미터: `{{ item.parameters }}`
 {% else %}
   - 없음
 {% endfor %}
@@ -133,21 +131,17 @@
 |---|---:|---:|---:|---:|
 | {{ model.split.strategy }} | {{ model.split.train_samples | integer }} | {{ model.split.validation_samples | integer }} | {{ model.split.test_samples | integer }} | {{ model.split.random_seed }} |
 
-### 후보 모델
+### 모델 정보
 
-| ID | 모델 | 라이브러리 | 학습 시간 | 상태 | 산출물 |
-|---|---|---|---:|---|---|
-{% for item in model.candidates %}
-| `{{ item.id }}` | {{ item.name }} | {{ item.library }} | {{ item.training_seconds | seconds }} | {{ item.status }} | `{{ item.artifact_path | display }}` |
-{% endfor %}
+| ID | 모델 | 라이브러리 | 학습 시간 | 산출물 |
+|---|---|---|---:|---|
+| `{{ model.model.id }}` | {{ model.model.name }} | {{ model.model.library }} | {{ model.model.training_seconds | seconds }} | `{{ model.model.artifact_path | display }}` |
 
 #### 하이퍼파라미터
 
-{% for item in model.candidates %}
-- `{{ item.id }}`: `{{ item.parameters }}`
-{% endfor %}
+- `{{ model.model.id }}`: `{{ model.model.parameters }}`
 {% else %}
-데이터 분할, 후보 모델, 하이퍼파라미터와 학습 시간이 입력되면 표시됩니다.
+데이터 분할, 모델 정보, 하이퍼파라미터와 학습 시간이 입력되면 표시됩니다.
 {% endif %}
 
 ## 5. 평가 결과
@@ -155,17 +149,19 @@
 {{ stage_state('evaluation') }}
 
 {% if stages.evaluation.status == 'complete' %}
-- 주요 평가 지표: **{{ evaluation.primary_metric }}**
-- 최종 모델: **`{{ evaluation.selected_model_id }}`**
-- 선정 근거: {{ evaluation.selection_reason }}
+- 평가 모델: **`{{ evaluation.model_id }}`**
 
-### 모델 비교
+### 전체 평가 지표
 
-| 모델 | Accuracy | Macro Precision | Macro Recall | Macro F1 | Weighted F1 | CV 평균 ± 표준편차 |
-|---|---:|---:|---:|---:|---:|---:|
-{% for item in evaluation.model_results %}
-| `{{ item.model_id }}` | {{ item.accuracy | percent(3) }} | {{ item.macro_precision | percent(3) }} | {{ item.macro_recall | percent(3) }} | **{{ item.macro_f1 | percent(3) }}** | {{ item.weighted_f1 | percent(3) }} | {{ item.cv_mean | percent(3) }} ± {{ item.cv_std | percent(3) }} |
-{% endfor %}
+| Accuracy | Macro Precision | Macro Recall | Macro F1 | Weighted F1 |
+|---:|---:|---:|---:|---:|
+| {{ evaluation.metrics.accuracy | percent(3) }} | {{ evaluation.metrics.macro_precision | percent(3) }} | {{ evaluation.metrics.macro_recall | percent(3) }} | {{ evaluation.metrics.macro_f1 | percent(3) }} | {{ evaluation.metrics.weighted_f1 | percent(3) }} |
+
+### 교차 검증
+
+| 지표 | Fold | 평균 | 표준편차 |
+|---|---:|---:|---:|
+| {{ evaluation.cross_validation.metric }} | {{ evaluation.cross_validation.folds }} | {{ evaluation.cross_validation.mean | percent(3) }} | {{ evaluation.cross_validation.std | percent(3) }} |
 
 ### 클래스별 성능
 
@@ -178,20 +174,33 @@
 ### 혼동행렬
 
 | 실제 ＼ 예측 | {% for label in evaluation.confusion_matrix.labels %}{{ label }}{% if not loop.last %} | {% endif %}{% endfor %} |
-|---|{% for label in evaluation.confusion_matrix.labels %}---:|{% endfor %}
+|---|{{ (['---:'] * (evaluation.confusion_matrix.labels | length)) | join('|') }}|
 {% for row in evaluation.confusion_matrix['values'] %}
 | **{{ evaluation.confusion_matrix.labels[loop.index0] }}** | {% for value in row %}{{ value | integer }}{% if not loop.last %} | {% endif %}{% endfor %} |
 {% endfor %}
 
-### 한계 및 후속 작업
-
-{% for item in evaluation.limitations %}
-- {{ item }}
+{% if evaluation.confusion_matrix.figure %}
+{% if evaluation.confusion_matrix.figure.exists %}
+![혼동행렬 히트맵]({{ evaluation.confusion_matrix.figure.markdown_path }})
 {% else %}
-- 등록된 한계가 없습니다.
+> 시각화 파일 없음: `{{ evaluation.confusion_matrix.figure.path }}`
+{% endif %}
+{% endif %}
+
+### 평가 시각화
+
+{% for figure in evaluation.figures %}
+#### {{ figure.title }}
+{% if figure.exists %}
+![{{ figure.alt }}]({{ figure.markdown_path }})
+{% else %}
+> 시각화 파일 없음: `{{ figure.path }}`
+{% endif %}
+{% else %}
+시각화가 등록되지 않았습니다.
 {% endfor %}
 {% else %}
-모델별 지표, 클래스별 성능, 혼동행렬과 선정 근거가 입력되면 표시됩니다.
+전체·클래스별 지표, 교차 검증, 혼동행렬과 시각화가 입력되면 표시됩니다.
 {% endif %}
 
 ---

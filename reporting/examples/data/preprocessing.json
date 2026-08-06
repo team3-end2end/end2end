@@ -20,23 +20,19 @@
       "trip_distance", "fare_amount", "trip_duration", "cbd_congestion_fee", "tolls_amount",
       "PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"
     ],
-    "excluded_features": [
-      {"name": "tip_amount", "reason": "결제 완료 후 기록되어 타깃을 직접 노출"},
-      {"name": "total_amount", "reason": "tip_amount를 포함하는 구성 누수"},
-      {"name": "passenger_count", "reason": "결측 패턴이 payment_type=0과 완전히 일치"},
-      {"name": "RatecodeID", "reason": "결측 패턴이 타깃과 일치"},
-      {"name": "mta_tax", "reason": "대부분 0.5달러인 저분산 변수"},
-      {"name": "improvement_surcharge", "reason": "대부분 1달러인 저분산 변수"}
-    ],
-    "derived_features": [
-      {"name": "trip_duration", "reason": "승차·하차 시각 차이를 분 단위로 변환"},
-      {"name": "hour", "reason": "반복되는 시간대 패턴 추출"},
-      {"name": "day_of_week", "reason": "반복되는 요일 패턴 추출"},
-      {"name": "is_airport", "reason": "JFK·LGA·EWR 승하차 여부 표시"}
-    ],
+    "excluded_features": ["tip_amount", "total_amount", "passenger_count", "RatecodeID", "mta_tax", "improvement_surcharge"],
+    "derived_features": ["trip_duration", "hour", "day_of_week", "is_airport"],
     "transformations": [
-      {"name": "categorical_encoding", "reason": "범주형 피처를 모델 입력 형태로 변환"},
-      {"name": "numeric_scaling", "reason": "거리·요금·시간의 단위 차이를 조정"}
+      {
+        "name": "OneHotEncoder",
+        "columns": ["PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"],
+        "parameters": {"handle_unknown": "ignore"}
+      },
+      {
+        "name": "StandardScaler",
+        "columns": ["trip_distance", "fare_amount", "trip_duration", "cbd_congestion_fee", "tolls_amount"],
+        "parameters": {}
+      }
     ]
   },
   "error": null
