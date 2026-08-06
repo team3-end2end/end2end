@@ -7,6 +7,10 @@
     "input_shape": {"rows": 4090836, "columns": 20},
     "output_shape": {"rows": 3891255, "columns": 12},
     "retention_ratio": 0.9512,
+    "removed_row_count": 199581,
+    "removed_column_count": 10,
+    "imputed_features": [],
+    "encoded_features": ["PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"],
     "filters": [
       {"name": "양수 요금", "rule": "fare_amount > 0", "before_rows": 4090836, "after_rows": 4073654, "removed_rows": 17182},
       {"name": "양수 거리", "rule": "trip_distance > 0", "before_rows": 4073654, "after_rows": 3962811, "removed_rows": 110843},

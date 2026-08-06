@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 
 SCHEMA_VERSION = 1
 STAGES = ("run", "eda", "preprocessing", "model", "evaluation")
@@ -23,7 +24,7 @@ def _validator() -> Draft202012Validator:
     """현재 스키마 버전에 대응하는 JSON Schema 검증기를 생성한다."""
     with SCHEMA_PATH.open(encoding="utf-8") as file:
         schema = json.load(file)
-    return Draft202012Validator(schema)
+    return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
 def validate_stage_result(result: Mapping[str, Any]) -> None:
@@ -47,6 +48,17 @@ def validate_stage_result(result: Mapping[str, Any]) -> None:
 
 def _validate_semantics(result: Mapping[str, Any]) -> None:
     """완료된 단계의 숫자 관계와 식별자 일관성을 검증한다."""
+    generated_at = result["generated_at"]
+    if generated_at is not None:
+        try:
+            parsed = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                raise ValueError("timezone is required")
+        except (AttributeError, ValueError) as exc:
+            raise ContractError(
+                "Invalid report stage result:\n- generated_at must be an ISO 8601 date-time with timezone"
+            ) from exc
+
     # 준비 중·실패 단계는 값이 완성되지 않았으므로 구조 검증만 수행한다.
     if result["status"] != "complete":
         return
@@ -72,6 +84,17 @@ def _validate_semantics(result: Mapping[str, Any]) -> None:
         for index in range(1, len(filters)):
             if filters[index - 1]["after_rows"] != filters[index]["before_rows"]:
                 problems.append(f"filters[{index}] does not continue from the previous filter")
+        if filters and filters[0]["before_rows"] != data["input_shape"]["rows"]:
+            problems.append("the first filter must start with input_shape rows")
+        if filters and filters[-1]["after_rows"] != data["output_shape"]["rows"]:
+            problems.append("the last filter must end with output_shape rows")
+        expected_removed = data["input_shape"]["rows"] - data["output_shape"]["rows"]
+        if data["removed_row_count"] != expected_removed:
+            problems.append("removed_row_count must equal input rows minus output rows")
+        input_rows = data["input_shape"]["rows"]
+        expected_retention = data["output_shape"]["rows"] / input_rows if input_rows else 0
+        if abs(data["retention_ratio"] - expected_retention) > 0.0001:
+            problems.append("retention_ratio must match input and output rows")
 
     if stage == "evaluation":
         # 혼동행렬과 클래스별 지표가 같은 클래스 순서와 크기를 사용하는지 확인한다.

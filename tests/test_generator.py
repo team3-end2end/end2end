@@ -118,3 +118,9 @@ def test_evaluation_must_reference_the_trained_model(tmp_path):
     evaluation_path.write_text(json.dumps(evaluation), encoding="utf-8")
     with pytest.raises(ContractError, match="does not match model"):
         generate_reports(inputs, tmp_path / "outputs", strict=True)
+
+
+def test_sample_marker_comes_from_input_data(tmp_path):
+    result = generate_reports(Path("reporting/examples/data"), tmp_path, strict=True)
+    assert "SAMPLE" in result.markdown.read_text(encoding="utf-8")
+    assert "SAMPLE" in result.html.read_text(encoding="utf-8")

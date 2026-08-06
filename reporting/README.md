@@ -2,6 +2,8 @@
 
 `reporting`은 EDA, 전처리, 모델, 평가 결과를 단계별 JSON으로 받아 팀 내부용 `report.md`와 비개발자용 `report.html`을 함께 생성합니다. 생성된 문서를 직접 수정하지 말고 입력 JSON 또는 템플릿을 수정하세요.
 
+> 현재 계약은 앞단 파이프라인 구현 전 공유·협업을 위한 **v1 초안**입니다. 실제 EDA·모델 출력이 확정되면 필수 지표와 선택 항목을 함께 조정합니다.
+
 ## 자동화 경계
 
 보고서 입력에는 코드가 계산하거나 실행 설정에서 가져올 수 있는 사실만 저장합니다.
@@ -39,6 +41,27 @@ python3 -m venv .venv
 | 전처리 | `reporting/data/preprocessing.json` | 필터 이력, 피처, 변환, 최종 크기 |
 | 모델 | `reporting/data/model.json` | 데이터 분할, 단일 모델, 파라미터, 학습 시간 |
 | 평가 | `reporting/data/evaluation.json` | 전체·클래스 지표, 교차 검증, 혼동행렬, 그림 |
+
+## 요청 항목 매핑
+
+초기 이슈에서 제안한 이름은 아래 필드로 제공됩니다.
+
+| 보고서 항목 | JSON 필드 | 타입·정의 |
+|---|---|---|
+| 데이터 행 수 | `run.data.dataset.shape.rows` | 원본 데이터 행 수, 정수 |
+| 데이터 열 수 | `run.data.dataset.shape.columns` | 원본 데이터 열 수, 정수 |
+| 타깃 변수 | `run.data.target.name` | 모델이 예측하는 컬럼명 |
+| 결측치 수 | `eda.data.missing_cell_count` | 전체 컬럼의 결측 셀 합계 |
+| 중복 행 수 | `eda.data.duplicate_row_count` | 원본 전체 컬럼 기준 완전 중복 행 수 |
+| 수치형 변수 수 | `eda.data.numeric_feature_count` | 앞단이 수치형으로 분류한 변수 수 |
+| 범주형 변수 수 | `eda.data.categorical_feature_count` | 앞단이 범주형으로 분류한 변수 수 |
+| 이상치 수 | `eda.data.outlier_count` | `outlier_rules`로 제거·표시된 행 수의 합계 |
+| 높은 상관관계 변수 | `eda.data.high_correlation_features` | `correlation_threshold` 이상인 변수 쌍과 상관계수 |
+| 제거된 행 수 | `preprocessing.data.removed_row_count` | 입력 행 수 − 출력 행 수 |
+| 제거된 열 수 | `preprocessing.data.removed_column_count` | 원본에서 명시적으로 제외한 컬럼 수; 파생 컬럼은 상계하지 않음 |
+| 결측치 처리 변수 | `preprocessing.data.imputed_features` | 대치가 적용된 컬럼명 배열; 없으면 `[]` |
+| 인코딩 변수 | `preprocessing.data.encoded_features` | 인코딩이 적용된 컬럼명 배열 |
+| 최종 학습 데이터 크기 | `preprocessing.data.output_shape` | 전처리 완료 후 행·열 수 |
 
 모든 파일은 다음 공통 구조를 사용합니다.
 

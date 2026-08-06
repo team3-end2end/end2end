@@ -11,6 +11,8 @@ from typing import Any, Mapping
 
 from .contracts import SCHEMA_VERSION, STAGES, ContractError, validate_stage_result
 
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "data"
+
 
 def write_stage_result(
     stage: str,
@@ -18,7 +20,7 @@ def write_stage_result(
     *,
     status: str = "complete",
     error: Mapping[str, Any] | None = None,
-    output_dir: str | Path = "reporting/data",
+    output_dir: str | Path = DEFAULT_OUTPUT_DIR,
     generated_at: str | None = None,
 ) -> Path:
     """한 단계 결과를 검증한 뒤 대응하는 JSON 파일에 원자적으로 저장한다.

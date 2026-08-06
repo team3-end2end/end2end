@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 
 import pytest
 
@@ -83,6 +85,17 @@ def test_writer_rejects_unknown_stage(tmp_path):
     assert list(tmp_path.iterdir()) == []
 
 
+def test_writer_default_path_is_independent_of_working_directory(tmp_path):
+    original = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        from reporting.writer import DEFAULT_OUTPUT_DIR
+
+        assert DEFAULT_OUTPUT_DIR == Path(__file__).resolve().parents[1] / "reporting" / "data"
+    finally:
+        os.chdir(original)
+
+
 def test_preprocessing_filter_counts_must_be_consistent():
     with pytest.raises(ContractError, match="row counts are inconsistent"):
         validate_stage_result(
@@ -96,6 +109,10 @@ def test_preprocessing_filter_counts_must_be_consistent():
                     "input_shape": {"rows": 10, "columns": 2},
                     "output_shape": {"rows": 7, "columns": 2},
                     "retention_ratio": 0.7,
+                    "removed_row_count": 3,
+                    "removed_column_count": 0,
+                    "imputed_features": [],
+                    "encoded_features": [],
                     "filters": [{"name": "bad", "rule": "x", "before_rows": 10, "after_rows": 7, "removed_rows": 2}],
                     "selected_features": ["x"],
                     "excluded_features": [],
@@ -138,6 +155,10 @@ def test_interpretation_fields_are_rejected():
                     "categorical_feature_count": 1,
                     "missing_cell_count": 0,
                     "duplicate_row_count": 0,
+                    "outlier_count": 0,
+                    "outlier_rules": [],
+                    "correlation_threshold": 0.8,
+                    "high_correlation_features": [],
                     "missing_by_column": [],
                     "class_distribution": [{"label": "a", "count": 1, "ratio": 1.0}],
                     "figures": [],
@@ -161,9 +182,27 @@ def test_missing_column_counts_must_match_total():
                     "categorical_feature_count": 1,
                     "missing_cell_count": 2,
                     "duplicate_row_count": 0,
+                    "outlier_count": 0,
+                    "outlier_rules": [],
+                    "correlation_threshold": 0.8,
+                    "high_correlation_features": [],
                     "missing_by_column": [{"column": "x", "count": 1, "ratio": 0.1}],
                     "class_distribution": [{"label": "a", "count": 10, "ratio": 1.0}],
                     "figures": [],
                 },
+            }
+        )
+
+
+def test_generated_at_must_be_iso_datetime():
+    with pytest.raises(ContractError, match="ISO 8601"):
+        validate_stage_result(
+            {
+                "schema_version": 1,
+                "stage": "eda",
+                "status": "pending",
+                "generated_at": "not-a-date",
+                "data": {},
+                "error": None,
             }
         )

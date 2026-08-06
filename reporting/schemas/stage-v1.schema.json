@@ -89,12 +89,16 @@
     },
     "eda": {
       "type": "object", "additionalProperties": false,
-      "required": ["numeric_feature_count", "categorical_feature_count", "missing_cell_count", "duplicate_row_count", "missing_by_column", "class_distribution", "figures"],
+      "required": ["numeric_feature_count", "categorical_feature_count", "missing_cell_count", "duplicate_row_count", "outlier_count", "outlier_rules", "correlation_threshold", "high_correlation_features", "missing_by_column", "class_distribution", "figures"],
       "properties": {
         "numeric_feature_count": {"type": "integer", "minimum": 0},
         "categorical_feature_count": {"type": "integer", "minimum": 0},
         "missing_cell_count": {"type": "integer", "minimum": 0},
         "duplicate_row_count": {"type": "integer", "minimum": 0},
+        "outlier_count": {"type": "integer", "minimum": 0},
+        "outlier_rules": {"type": "array", "items": {"type": "string"}},
+        "correlation_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "high_correlation_features": {"type": "array", "items": {"$ref": "#/$defs/correlationPair"}},
         "missing_by_column": {"type": "array", "items": {"$ref": "#/$defs/missingColumn"}},
         "class_distribution": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/classDistribution"}},
         "figures": {"type": "array", "items": {"$ref": "#/$defs/figure"}}
@@ -111,16 +115,27 @@
       "type": "object", "additionalProperties": false, "required": ["label", "count", "ratio"],
       "properties": {"label": {"type": "string"}, "count": {"type": "integer", "minimum": 0}, "ratio": {"type": "number", "minimum": 0, "maximum": 1}}
     },
+    "correlationPair": {
+      "type": "object", "additionalProperties": false, "required": ["feature_a", "feature_b", "correlation"],
+      "properties": {
+        "feature_a": {"type": "string"}, "feature_b": {"type": "string"},
+        "correlation": {"type": "number", "minimum": -1, "maximum": 1}
+      }
+    },
     "figure": {
       "type": "object", "additionalProperties": false, "required": ["title", "path", "alt"],
       "properties": {"title": {"type": "string"}, "path": {"type": "string"}, "alt": {"type": "string"}}
     },
     "preprocessing": {
       "type": "object", "additionalProperties": false,
-      "required": ["input_shape", "output_shape", "retention_ratio", "filters", "selected_features", "excluded_features", "derived_features", "transformations"],
+      "required": ["input_shape", "output_shape", "retention_ratio", "removed_row_count", "removed_column_count", "imputed_features", "encoded_features", "filters", "selected_features", "excluded_features", "derived_features", "transformations"],
       "properties": {
         "input_shape": {"$ref": "#/$defs/shape"}, "output_shape": {"$ref": "#/$defs/shape"},
         "retention_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "removed_row_count": {"type": "integer", "minimum": 0},
+        "removed_column_count": {"type": "integer", "minimum": 0},
+        "imputed_features": {"type": "array", "items": {"type": "string"}},
+        "encoded_features": {"type": "array", "items": {"type": "string"}},
         "filters": {"type": "array", "items": {"$ref": "#/$defs/filter"}},
         "selected_features": {"type": "array", "minItems": 1, "items": {"type": "string"}},
         "excluded_features": {"type": "array", "items": {"type": "string"}},
@@ -174,7 +189,7 @@
       "properties": {
         "model_id": {"type": "string"},
         "metrics": {"$ref": "#/$defs/metrics"},
-        "cross_validation": {"$ref": "#/$defs/crossValidation"},
+        "cross_validation": {"anyOf": [{"$ref": "#/$defs/crossValidation"}, {"type": "null"}]},
         "class_metrics": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/classMetric"}},
         "confusion_matrix": {"$ref": "#/$defs/confusionMatrix"},
         "figures": {"type": "array", "items": {"$ref": "#/$defs/figure"}}
@@ -202,8 +217,11 @@
       "type": "object", "additionalProperties": false,
       "required": ["label", "precision", "recall", "f1", "support"],
       "properties": {
-        "label": {"type": "string"}, "precision": {"type": "number"}, "recall": {"type": "number"},
-        "f1": {"type": "number"}, "support": {"type": "integer", "minimum": 0}
+        "label": {"type": "string"},
+        "precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "support": {"type": "integer", "minimum": 0}
       }
     },
     "confusionMatrix": {

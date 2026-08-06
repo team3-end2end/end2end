@@ -40,6 +40,20 @@
 |---:|---:|---:|---:|
 | {{ eda.numeric_feature_count | integer }} | {{ eda.categorical_feature_count | integer }} | {{ eda.missing_cell_count | integer }} | {{ eda.duplicate_row_count | integer }} |
 
+### 이상치와 상관관계
+
+- 이상치 수: **{{ eda.outlier_count | integer }}**
+- 이상치 규칙: {{ eda.outlier_rules | join(', ') | display }}
+- 높은 상관관계 기준: **|r| ≥ {{ '%.2f' | format(eda.correlation_threshold) }}**
+
+| 변수 A | 변수 B | 상관계수 |
+|---|---|---:|
+{% for item in eda.high_correlation_features %}
+| `{{ item.feature_a }}` | `{{ item.feature_b }}` | {{ '%.4f' | format(item.correlation) }} |
+{% else %}
+| 해당 없음 | — | — |
+{% endfor %}
+
 ### 타깃 분포
 
 | 클래스 | 건수 | 비율 |
@@ -84,6 +98,10 @@
 - 입력: **{{ preprocessing.input_shape.rows | integer }}행 × {{ preprocessing.input_shape.columns | integer }}열**
 - 출력: **{{ preprocessing.output_shape.rows | integer }}행 × {{ preprocessing.output_shape.columns | integer }}열**
 - 데이터 유지율: **{{ preprocessing.retention_ratio | percent(2) }}**
+- 제거된 행: **{{ preprocessing.removed_row_count | integer }}**
+- 제거된 열: **{{ preprocessing.removed_column_count | integer }}**
+- 결측치 처리 변수: {{ preprocessing.imputed_features | join(', ') | display('없음') }}
+- 인코딩 변수: {{ preprocessing.encoded_features | join(', ') | display('없음') }}
 
 ### 단계별 필터
 
@@ -159,9 +177,13 @@
 
 ### 교차 검증
 
+{% if evaluation.cross_validation %}
 | 지표 | Fold | 평균 | 표준편차 |
 |---|---:|---:|---:|
 | {{ evaluation.cross_validation.metric }} | {{ evaluation.cross_validation.folds }} | {{ evaluation.cross_validation.mean | percent(3) }} | {{ evaluation.cross_validation.std | percent(3) }} |
+{% else %}
+교차 검증을 수행하지 않았습니다.
+{% endif %}
 
 ### 클래스별 성능
 

@@ -132,7 +132,8 @@ def _environment(template_name: str) -> Environment:
 
 def _context(stages: dict[str, dict[str, Any]], output_dir: Path, example: bool) -> dict[str, Any]:
     """원본 단계 결과를 두 템플릿이 공통으로 읽는 표시용 데이터로 변환한다."""
-    context: dict[str, Any] = {"stages": stages, "is_sample": example}
+    run_is_sample = bool(stages["run"].get("data", {}).get("is_sample", False))
+    context: dict[str, Any] = {"stages": stages, "is_sample": example or run_is_sample}
     for stage, result in stages.items():
         context[stage] = result["data"] if result["status"] == "complete" else {}
 
