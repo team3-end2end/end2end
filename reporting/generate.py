@@ -1,4 +1,4 @@
-"""Compatibility entrypoint for ``python -m reporting.generate``."""
+"""문서화된 ``python -m reporting.generate`` 명령을 제공하는 진입점."""
 
 from .__main__ import main
 
