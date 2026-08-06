@@ -22,7 +22,7 @@ TARGET_ENCODING = {"Flex Fare": 0, "신용카드": 1, "현금": 2}
 
 # 위치 ID 컬럼. 원본 지역 ID를 숫자 피처로 그냥 넣으면 안 되므로(값 크기에 의미 없음),
 # pipeline.py가 학습 시 fold/split마다 클래스별 비율로 새로 인코딩합니다.
-# 이 컬럼이 데이터에 없으면(예: --sample 더미 CSV) 자동으로 건너뜁니다.
+# 이 컬럼이 데이터에 없으면 자동으로 건너뜁니다.
 LOCATION_COLS = ["PULocationID", "DOLocationID"]
 
 # 타깃 값 → 화면에 보여줄 클래스 이름.

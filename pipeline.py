@@ -1,4 +1,3 @@
-import argparse
 import inspect
 import os
 import warnings
@@ -34,7 +33,7 @@ class GeoEncoder(BaseEstimator, TransformerMixin):
     이 클래스일 비율"을 따로 인코딩하기 때문에(첫 클래스는 기준값이라 생략, 나머지
     클래스 수만큼 컬럼 생성). 단일 평균으로 인코딩하면 명목형 다중클래스에서는
     (예: 0=Flex Fare/1=카드/2=현금의 평균 같은) 의미 없는 숫자가 나와서 이렇게 짰다.
-    LOCATION_COLS가 데이터에 없으면(예: --sample 더미 CSV) 그냥 통과시킨다.
+    LOCATION_COLS가 데이터에 없으면 그냥 통과시킨다.
     """
 
     def __init__(self, m: int = 100):
@@ -82,7 +81,6 @@ def load_data():
     if not os.path.exists(config.DATA_PATH):
         raise FileNotFoundError(
             f"config.py의 DATA_PATH에 적은 '{config.DATA_PATH}' 파일이 없습니다. "
-            f"먼저 'python pipeline.py --sample'로 확인용 CSV를 만들거나, "
             f"DATA_PATH를 실제 파일 경로로 고치세요."
         )
     if str(config.DATA_PATH).endswith(".parquet"):
@@ -327,76 +325,38 @@ def save(pipeline, model_name, best_params, n_rows, n_features, cv_macro_f1, tes
     return model_path
 
 
-def make_sample_csv():
-    # 실제 데이터(전처리된 v1/v2 CSV)가 들어오면 이 함수는 쓰지 않습니다.
-    # 파이프라인이 도는지 확인하기 위한 가짜 CSV만 만듭니다.
-    rng = np.random.RandomState(config.SEED)
-    n = 5000
-    n_card = int(n * 0.7)
-    n_flex = int(n * 0.2)
-    n_cash = n - n_card - n_flex
-
-    labels = np.array([1] * n_card + [0] * n_flex + [2] * n_cash)
-    rng.shuffle(labels)
-
-    n_features = 10
-    X = rng.normal(loc=0.0, scale=1.0, size=(n, n_features))
-    X[:, 0] += labels * 0.8  # 학습이 되는지 확인할 수 있도록 약한 신호를 심어둠
-
-    df = pd.DataFrame(X, columns=[f"feature_{i + 1}" for i in range(n_features)])
-    df[config.TARGET] = labels
-
-    for col in ["feature_2", "feature_3"]:
-        na_idx = rng.choice(n, size=int(n * 0.03), replace=False)
-        df.loc[na_idx, col] = np.nan
-
-    out_dir = os.path.dirname(config.DATA_PATH)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
-    df.to_csv(config.DATA_PATH, index=False)
-    print(f"[make_sample_csv] 확인용 가짜 CSV 생성: {config.DATA_PATH} ({n}행 x {n_features}피처)")
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--sample", action="store_true", help="확인용 가짜 CSV를 만들고 종료합니다.")
-    args = parser.parse_args()
+    print("[1/6] 데이터 불러오는 중...")
+    df = load_data()
 
-    if args.sample:
-        make_sample_csv()
-        print("이제 'python pipeline.py'를 실행하세요.")
-    else:
-        print("[1/6] 데이터 불러오는 중...")
-        df = load_data()
+    print("[2/6] train/test 분리 중...")
+    X_train, X_test, y_train, y_test = split(df)
 
-        print("[2/6] train/test 분리 중...")
-        X_train, X_test, y_train, y_test = split(df)
-
-        if config.TUNE_SAMPLE_SIZE and len(X_train) > config.TUNE_SAMPLE_SIZE:
-            X_tune, _, y_tune, _ = train_test_split(
-                X_train, y_train,
-                train_size=config.TUNE_SAMPLE_SIZE,
-                random_state=config.SEED,
-                stratify=y_train,
-            )
-            print(f"[2/6] tune용 표본 추출: {len(X_train)}행 -> {len(X_tune)}행 (최종 재학습은 전체 사용)")
-        else:
-            X_tune, y_tune = X_train, y_train
-
-        print("[3/6] Optuna로 모델/하이퍼파라미터 탐색 중 (train 표본만 사용)...")
-        best_model_name, best_params, cv_macro_f1 = tune(X_tune, y_tune)
-
-        print("[4/6] 최적 설정으로 최종 모델 재학습 중...")
-        final_pipeline = fit_final(best_model_name, best_params, X_train, y_train)
-
-        print("[5/6] test 데이터로 평가 중...")
-        test_acc, test_macro_f1 = evaluate(final_pipeline, X_test, y_test)
-
-        print("[6/6] 결과 저장 중...")
-        model_path = save(
-            final_pipeline, best_model_name, best_params,
-            n_rows=len(df), n_features=X_train.shape[1],
-            cv_macro_f1=cv_macro_f1, test_acc=test_acc, test_macro_f1=test_macro_f1,
+    if config.TUNE_SAMPLE_SIZE and len(X_train) > config.TUNE_SAMPLE_SIZE:
+        X_tune, _, y_tune, _ = train_test_split(
+            X_train, y_train,
+            train_size=config.TUNE_SAMPLE_SIZE,
+            random_state=config.SEED,
+            stratify=y_train,
         )
+        print(f"[2/6] tune용 표본 추출: {len(X_train)}행 -> {len(X_tune)}행 (최종 재학습은 전체 사용)")
+    else:
+        X_tune, y_tune = X_train, y_train
 
-        print(f"완료. 저장된 모델: {model_path}, 결과 기록: outputs/results.csv")
+    print("[3/6] Optuna로 모델/하이퍼파라미터 탐색 중 (train 표본만 사용)...")
+    best_model_name, best_params, cv_macro_f1 = tune(X_tune, y_tune)
+
+    print("[4/6] 최적 설정으로 최종 모델 재학습 중...")
+    final_pipeline = fit_final(best_model_name, best_params, X_train, y_train)
+
+    print("[5/6] test 데이터로 평가 중...")
+    test_acc, test_macro_f1 = evaluate(final_pipeline, X_test, y_test)
+
+    print("[6/6] 결과 저장 중...")
+    model_path = save(
+        final_pipeline, best_model_name, best_params,
+        n_rows=len(df), n_features=X_train.shape[1],
+        cv_macro_f1=cv_macro_f1, test_acc=test_acc, test_macro_f1=test_macro_f1,
+    )
+
+    print(f"완료. 저장된 모델: {model_path}, 결과 기록: outputs/results.csv")
