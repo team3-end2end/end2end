@@ -2,6 +2,15 @@
 
 `reporting`은 EDA, 전처리, 모델, 평가 결과를 단계별 JSON으로 받아 팀 내부용 `report.md`와 비개발자용 `report.html`을 함께 생성합니다. 생성된 문서를 직접 수정하지 말고 입력 JSON 또는 템플릿을 수정하세요.
 
+## 자동화 경계
+
+보고서 입력에는 코드가 계산하거나 실행 설정에서 가져올 수 있는 사실만 저장합니다.
+
+- 포함: 행·열 수, 결측 수, 클래스 분포, 필터 전후 건수, 피처 목록, 모델 파라미터, 평가 지표, 혼동행렬, 이미지 경로
+- 제외: 분석 해석, 근거 문장, 권장 조치, 모델 선정 이유, 결론, 한계에 대한 판단
+
+EDA·전처리·모델 코드는 수치와 PNG를 만들고, 보고서 생성기는 이를 검증해 표와 이미지로 배치합니다. 결과의 의미를 분석하고 판단하는 일은 완성된 보고서를 읽는 사람이 담당합니다.
+
 ## 빠른 확인
 
 ```bash
@@ -26,10 +35,10 @@ python3 -m venv .venv
 | 단계 | 파일 | 주요 내용 |
 |---|---|---|
 | 실행 | `reporting/data/run.json` | 실행 ID, 데이터셋, 타깃 정의 |
-| EDA | `reporting/data/eda.json` | 품질, 클래스 분포, 발견, 그림 |
+| EDA | `reporting/data/eda.json` | 구조, 결측, 클래스 분포, 그림 |
 | 전처리 | `reporting/data/preprocessing.json` | 필터 이력, 피처, 변환, 최종 크기 |
-| 모델 | `reporting/data/model.json` | 데이터 분할, 후보, 파라미터, 학습 시간 |
-| 평가 | `reporting/data/evaluation.json` | 모델·클래스 지표, 혼동행렬, 최종 선택 |
+| 모델 | `reporting/data/model.json` | 데이터 분할, 단일 모델, 파라미터, 학습 시간 |
+| 평가 | `reporting/data/evaluation.json` | 전체·클래스 지표, 교차 검증, 혼동행렬, 그림 |
 
 모든 파일은 다음 공통 구조를 사용합니다.
 
@@ -67,17 +76,14 @@ write_stage_result(
             "test_samples": 583689,
             "random_seed": 42,
         },
-        "candidates": [
-            {
-                "id": "random_forest",
-                "name": "Random Forest",
-                "library": "scikit-learn",
-                "parameters": {"n_estimators": 300},
-                "training_seconds": 326.18,
-                "artifact_path": "models/random_forest.joblib",
-                "status": "complete",
-            }
-        ],
+        "model": {
+            "id": "random_forest",
+            "name": "Random Forest",
+            "library": "scikit-learn",
+            "parameters": {"n_estimators": 300},
+            "training_seconds": 326.18,
+            "artifact_path": "models/random_forest.joblib",
+        },
     },
 )
 ```
@@ -109,11 +115,23 @@ generate_reports(strict=True)
 
 ## 이미지와 출력 규칙
 
+- 시각화는 EDA 또는 모델 코드가 PNG로 저장해야 하며 보고서 생성기는 차트를 그리지 않습니다.
 - 그림의 `path`는 저장소 루트에서 실행했을 때 찾을 수 있는 상대 경로로 작성합니다.
 - Markdown은 출력 위치 기준 상대 링크를 생성합니다.
 - HTML은 이미지를 Base64로 포함하므로 `report.html` 하나만 전달할 수 있습니다.
-- 그림이 없으면 보고서 생성을 중단하지 않고 `이미지 준비 중`을 표시합니다.
+- 그림이 없으면 보고서 생성을 중단하지 않고 `시각화 파일 없음`을 표시합니다.
 - 숫자, 백분율, 초 단위와 빈 값 표시는 공통 포맷터가 담당합니다.
+
+```python
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+figure_path = Path("artifacts/evaluation/confusion_matrix.png")
+figure_path.parent.mkdir(parents=True, exist_ok=True)
+plt.savefig(figure_path, dpi=150, bbox_inches="tight")
+
+evaluation_result["confusion_matrix"]["figure_path"] = str(figure_path)
+```
 
 ## CI 연결 시
 
