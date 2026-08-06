@@ -1,0 +1,4 @@
+﻿세트,피처수,pseudoR2,maxVIF,비고
+원본 피처 그대로,10,0.0176,7.33,기준선
+performance,22,0.0567,284.88,부스팅 계열 (XGBoost / LightGBM / CatBoost)
+interpretable,6,0.0529,2.91,회귀 계열 (LogisticRegression / ElasticNet)
