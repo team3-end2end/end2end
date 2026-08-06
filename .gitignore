@@ -3,3 +3,10 @@ data/
 .venv/
 eda/123/
 .DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Versioned report inputs are intentionally tracked despite the general data rule.
+!reporting/data/
+!reporting/data/*.json
