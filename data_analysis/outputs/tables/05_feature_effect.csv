@@ -1,0 +1,12 @@
+﻿feature,종류,지표,값
+DOLocationID,범주형,CramersV,0.1615
+PULocationID,범주형,CramersV,0.1342
+trip_duration,수치형,Cohen_d,0.1064
+cbd_congestion_fee,수치형,Cohen_d,0.0902
+is_airport,범주형,CramersV,0.0651
+VendorID,범주형,CramersV,0.0439
+hour,범주형,CramersV,0.0414
+tolls_amount,수치형,Cohen_d,0.0341
+day_of_week,범주형,CramersV,0.0229
+fare_amount,수치형,Cohen_d,-0.0048
+trip_distance,수치형,Cohen_d,0.001

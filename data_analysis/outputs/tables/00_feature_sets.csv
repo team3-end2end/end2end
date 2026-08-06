@@ -1,0 +1,3 @@
+﻿세트,용도,목표,피처수(인코딩 후),피처,메모
+performance,부스팅 계열 (XGBoost / LightGBM / CatBoost),설명력을 좀 포기하더라도 성능 우선. 피처가 많고 서로 겹쳐도 됨,22,"trip_distance, fare_amount, trip_duration, tolls_amount, cbd_congestion_fee, fare_per_mile, fare_per_min, speed, is_flat70, has_tolls, hour, day_of_week, is_night, is_weekend, is_airport, air_x_fare, air_x_dist, flat70_x_dist, cbd0_x_dur + pu_te, do_te, route_te",정규화·표준화 불필요. 지역은 LightGBM native categorical 로 넣거나 TargetEncoder 를 쓰거나 둘 중 하나 (TE 쪽이 pseudo-R² 기준 유리)
+interpretable,회귀 계열 (LogisticRegression / ElasticNet),계수를 해석할 수 있고 오버피팅 위험이 낮을 것. 최소 피처,6,"log_fare, fare_per_mile, hour_cos + pu_te, do_te, route_te",최대 VIF 2.91 — 다중공선 없음. 상호작용 항은 일부러 뺐다: 지역 타겟 인코딩이 이미 공항을 알고 있어서 중복이다 (증분 +0.0000). 단 인코딩을 안 쓸 거면 air_x_fare 를 넣어야 한다 (그때는 +0.0035)

@@ -3,3 +3,15 @@ data/
 .venv/
 eda/123/
 .DS_Store
+eda/data_preparation/yellow_tripdata_2026-05.parquet
+eda/data_preparation/data_preparation.ipynb
+
+__pycache__/
+*.pyc
+
+# 전부 생성물이라 커밋 안 함. subsets/ 만 190MB고 나머지는 작다.
+#   python data_analysis/feature_analysis.py    → subsets/, tables/   (15초)
+#   python data_analysis/evaluate.py            → figures/            (20초)
+data_analysis/outputs/subsets/
+data_analysis/outputs/tables/
+data_analysis/outputs/figures/
