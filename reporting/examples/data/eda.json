@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "stage": "eda",
+  "status": "complete",
+  "generated_at": "2026-08-06T10:00:00+09:00",
+  "data": {
+    "numeric_feature_count": 13,
+    "categorical_feature_count": 5,
+    "missing_cell_count": 4776855,
+    "duplicate_row_count": 0,
+    "class_distribution": [
+      {"label": "신용카드", "count": 2660062, "ratio": 0.6836},
+      {"label": "Flex Fare", "count": 878256, "ratio": 0.2257},
+      {"label": "현금", "count": 352937, "ratio": 0.0907}
+    ],
+    "findings": [
+      {
+        "title": "결제 후 생성되는 금액은 사용할 수 없습니다",
+        "description": "tip_amount와 total_amount는 결제수단을 직접 드러내 모델 성능을 실제보다 높게 만듭니다.",
+        "severity": "critical",
+        "evidence": "현금 팁 0원 100%, fare_amount와 total_amount 상관계수 0.96",
+        "action": "두 컬럼을 모델 피처에서 제외"
+      },
+      {
+        "title": "극단적인 거리값이 관계를 왜곡합니다",
+        "description": "307,491마일 한 건 때문에 거리와 요금의 상관관계가 거의 0으로 보였습니다.",
+        "severity": "warning",
+        "evidence": "이상치 처리 전후 상관계수 0.008 → 0.866",
+        "action": "trip_distance를 0~200마일 범위로 필터링"
+      },
+      {
+        "title": "지역과 시간대가 중요한 단서입니다",
+        "description": "승차 지역과 시간대에 따라 결제수단 구성에 의미 있는 차이가 있습니다.",
+        "severity": "info",
+        "evidence": "지역별 현금 비율 0~77.2%, 새벽 4시 Flex Fare 비율 50.9%",
+        "action": "지역·시간·요일과 공항 여부 피처 생성"
+      }
+    ],
+    "figures": [
+      {
+        "title": "결제수단별 요금·거리 분포",
+        "path": "eda/handoff/figures/target_box.png",
+        "caption": "카드와 현금은 분포가 크게 겹치지만 Flex Fare는 상대적으로 장거리·고액 운행에 많습니다.",
+        "alt": "결제수단별 요금과 거리 박스플롯"
+      },
+      {
+        "title": "원본 데이터 결측 패턴",
+        "path": "eda/handoff/figures/missing_matrix.png",
+        "caption": "다섯 컬럼의 결측이 같은 행에서 발생하며 payment_type 0과 일치합니다.",
+        "alt": "컬럼별 결측값 발생 패턴"
+      }
+    ]
+  },
+  "error": null
+}

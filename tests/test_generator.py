@@ -89,3 +89,17 @@ def test_generation_is_deterministic(tmp_path):
     second = generate_reports(inputs, outputs)
     assert second.markdown.read_bytes() == markdown
     assert second.html.read_bytes() == html
+
+
+def test_tracked_example_renders_complete_sample(tmp_path):
+    result = generate_reports(
+        Path("reporting/examples/data"), tmp_path, strict=True, example=True
+    )
+    markdown = result.markdown.read_text(encoding="utf-8")
+    html = result.html.read_text(encoding="utf-8")
+    assert "SAMPLE" in markdown
+    assert "random_forest" in markdown
+    assert "Macro F1" in markdown
+    assert "SAMPLE" in html
+    assert "data:image/png;base64," in html
+    assert "reporting/examples/data" not in html

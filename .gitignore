@@ -10,3 +10,6 @@ __pycache__/
 # Versioned report inputs are intentionally tracked despite the general data rule.
 !reporting/data/
 !reporting/data/*.json
+!reporting/examples/
+!reporting/examples/data/
+!reporting/examples/data/*.json

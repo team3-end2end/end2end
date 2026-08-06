@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "model",
+  "status": "complete",
+  "generated_at": "2026-08-06T10:00:00+09:00",
+  "data": {
+    "split": {
+      "strategy": "stratified 70/15/15 split",
+      "train_samples": 2723878,
+      "validation_samples": 583688,
+      "test_samples": 583689,
+      "random_seed": 42
+    },
+    "candidates": [
+      {
+        "id": "logistic_regression",
+        "name": "Logistic Regression",
+        "library": "scikit-learn",
+        "parameters": {"max_iter": 500, "class_weight": "balanced"},
+        "training_seconds": 48.32,
+        "artifact_path": "models/logistic_regression.joblib",
+        "status": "complete"
+      },
+      {
+        "id": "random_forest",
+        "name": "Random Forest",
+        "library": "scikit-learn",
+        "parameters": {"n_estimators": 300, "max_depth": 18, "class_weight": "balanced_subsample"},
+        "training_seconds": 326.18,
+        "artifact_path": "models/random_forest.joblib",
+        "status": "complete"
+      }
+    ]
+  },
+  "error": null
+}

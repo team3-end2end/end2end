@@ -128,7 +128,7 @@
       {% if evaluation.limitations %}<h3>해석할 때 주의할 점</h3><ul>{% for item in evaluation.limitations %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
       <details><summary>학습 설정과 혼동행렬</summary>
         {% if stages.model.status == 'complete' %}<p>분할 전략: {{ model.split.strategy }} · Seed: {{ model.split.random_seed }}</p>{% endif %}
-        <div class="table-wrap"><table><thead><tr><th>실제 ＼ 예측</th>{% for label in evaluation.confusion_matrix.labels %}<th class="number">{{ label }}</th>{% endfor %}</tr></thead><tbody>{% for row in evaluation.confusion_matrix.values %}<tr><td><strong>{{ evaluation.confusion_matrix.labels[loop.index0] }}</strong></td>{% for value in row %}<td class="number">{{ value | integer }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>실제 ＼ 예측</th>{% for label in evaluation.confusion_matrix.labels %}<th class="number">{{ label }}</th>{% endfor %}</tr></thead><tbody>{% for row in evaluation.confusion_matrix['values'] %}<tr><td><strong>{{ evaluation.confusion_matrix.labels[loop.index0] }}</strong></td>{% for value in row %}<td class="number">{{ value | integer }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
       </details>
       {% elif stages.evaluation.status == 'failed' %}<div class="error-panel">{{ stages.evaluation.error.message }}</div>
       {% else %}<div class="pending-panel">모델 학습과 평가가 완료되면 후보 비교, 클래스별 성능과 최종 결론이 표시됩니다.</div>{% endif %}

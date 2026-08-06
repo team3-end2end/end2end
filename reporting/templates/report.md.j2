@@ -179,7 +179,7 @@
 
 | 실제 ＼ 예측 | {% for label in evaluation.confusion_matrix.labels %}{{ label }}{% if not loop.last %} | {% endif %}{% endfor %} |
 |---|{% for label in evaluation.confusion_matrix.labels %}---:|{% endfor %}
-{% for row in evaluation.confusion_matrix.values %}
+{% for row in evaluation.confusion_matrix['values'] %}
 | **{{ evaluation.confusion_matrix.labels[loop.index0] }}** | {% for value in row %}{{ value | integer }}{% if not loop.last %} | {% endif %}{% endfor %} |
 {% endfor %}
 
