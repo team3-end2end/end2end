@@ -48,6 +48,7 @@ def write_stage_result(
     )
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as file:
+            os.fchmod(file.fileno(), 0o644)
             json.dump(envelope, file, ensure_ascii=False, indent=2)
             file.write("\n")
             file.flush()

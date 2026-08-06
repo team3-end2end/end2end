@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import base64
 import json
+import mimetypes
 import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from .contracts import STAGES, ContractError, validate_stage_result
 
@@ -73,7 +75,7 @@ def _environment(template_name: str) -> Environment:
     environment = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         undefined=StrictUndefined,
-        autoescape=select_autoescape(enabled_extensions=("html", "xml")),
+        autoescape=template_name.endswith(".html.j2"),
         trim_blocks=True,
         lstrip_blocks=True,
         keep_trailing_newline=True,
@@ -96,11 +98,18 @@ def _context(stages: dict[str, dict[str, Any]], output_dir: Path, example: bool)
         source = Path(item["path"])
         item["exists"] = source.is_file()
         item["markdown_path"] = os.path.relpath(source, output_dir)
+        item["data_uri"] = _data_uri(source) if item["exists"] else None
         normalized_figures.append(item)
     if context["eda"]:
         context["eda"] = dict(context["eda"])
         context["eda"]["figures"] = normalized_figures
     return context
+
+
+def _data_uri(path: Path) -> str:
+    mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
 
 
 def _render(template_name: str, context: dict[str, Any]) -> str:
@@ -118,6 +127,7 @@ def _write_or_check(path: Path, content: str, check: bool) -> None:
     )
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as file:
+            os.fchmod(file.fileno(), 0o644)
             file.write(content)
             file.flush()
             os.fsync(file.fileno())
@@ -135,16 +145,15 @@ def generate_reports(
     check: bool = False,
     example: bool = False,
 ) -> GeneratedReports:
-    """Generate reports from stage JSON files.
-
-    HTML support is attached by the HTML work unit; the stable return type
-    already reserves its path.
-    """
+    """Generate Markdown and standalone HTML reports from stage JSON files."""
     source_dir = Path(input_dir)
     destination_dir = Path(output_dir)
     stages = _load_stages(source_dir, strict=strict)
     context = _context(stages, destination_dir, example=example)
     markdown_name = "report.example.md" if example else "report.md"
+    html_name = "report.example.html" if example else "report.html"
     markdown_path = destination_dir / markdown_name
+    html_path = destination_dir / html_name
     _write_or_check(markdown_path, _render("report.md.j2", context), check)
-    return GeneratedReports(markdown=markdown_path)
+    _write_or_check(html_path, _render("report.html.j2", context), check)
+    return GeneratedReports(markdown=markdown_path, html=html_path)

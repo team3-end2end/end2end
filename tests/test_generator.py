@@ -35,6 +35,10 @@ def test_pending_inputs_render_markdown(tmp_path):
     content = result.markdown.read_text(encoding="utf-8")
     assert content.count("준비 중") >= 5
     assert "직접 수정하지 말고" in content
+    html = result.html.read_text(encoding="utf-8")
+    assert "<!doctype html>" in html
+    assert "외부" not in html
+    assert "준비 중" in html
 
 
 def test_strict_mode_rejects_pending_stage(tmp_path):
@@ -53,3 +57,15 @@ def test_check_detects_stale_markdown(tmp_path):
     (outputs / "report.md").write_text("stale", encoding="utf-8")
     with pytest.raises(ContractError, match="out of date"):
         generate_reports(inputs, outputs, check=True)
+
+
+def test_html_has_no_external_runtime_dependencies(tmp_path):
+    inputs = tmp_path / "inputs"
+    outputs = tmp_path / "outputs"
+    _pending_inputs(inputs)
+    result = generate_reports(inputs, outputs)
+    html = result.html.read_text(encoding="utf-8")
+    assert "<script" not in html
+    assert "http://" not in html
+    assert "https://" not in html
+    assert "@media print" in html
