@@ -1,0 +1,20 @@
+# Python 3.11 기준.
+#
+# 버전을 고정하는 이유: RANDOM_STATE를 고정한 것과 같다.
+# 핀이 없으면 시스템에 깔린 pandas를 타서 같은 코드가 다른 결과를 낸다.
+#
+#   python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+# Step 1·2 — 로딩 비교 · 전처리
+pandas==3.0.5
+polars==1.43.2
+pyarrow==25.0.0
+numpy==2.5.1
+
+# eda/viz.py — 이미 병합된 시각화 스크립트가 쓰는 것.
+# 이 파일이 requirements.txt 를 처음 추가하는 만큼, 레포에 있는 코드가
+# 설치 직후 그대로 실행되도록 함께 담는다.
+matplotlib==3.11.1
+seaborn==0.13.2
+missingno
+# ↑ 로컬 환경에 없어 버전을 확인하지 못했다. viz.py 작성자가 핀을 지정해 주기 바란다.

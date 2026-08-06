@@ -1,0 +1,42 @@
+{
+  "step": "02_preprocess",
+  "raw_shape": [
+    4090836,
+    20
+  ],
+  "duplicates": 0,
+  "missing_cols": {
+    "passenger_count": 955371,
+    "RatecodeID": 955371,
+    "store_and_fwd_flag": 955371,
+    "congestion_surcharge": 955371,
+    "Airport_fee": 955371
+  },
+  "missing_matches_flexfare": true,
+  "rules": {
+    "fare_amount <= 0": 6087,
+    "trip_distance <= 0": 107168,
+    "trip_distance >= 200": 73,
+    "trip_duration_min <= 0": 51367,
+    "trip_duration_min >= 180": 1404
+  },
+  "excluded_by_class": 34971,
+  "clean_shape": [
+    3891795,
+    25
+  ],
+  "retain_rate": 0.9513,
+  "class_pct": {
+    "신용카드": 68.36,
+    "Flex Fare": 22.57,
+    "현금": 9.07
+  },
+  "output": "data/processed/cleaned.parquet",
+  "na_by_design_cols": [
+    "passenger_count",
+    "RatecodeID",
+    "store_and_fwd_flag",
+    "congestion_surcharge",
+    "Airport_fee"
+  ]
+}
