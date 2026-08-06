@@ -69,3 +69,23 @@ def test_html_has_no_external_runtime_dependencies(tmp_path):
     assert "http://" not in html
     assert "https://" not in html
     assert "@media print" in html
+
+
+def test_missing_stage_file_is_reported(tmp_path):
+    inputs = tmp_path / "inputs"
+    _pending_inputs(inputs)
+    (inputs / "model.json").unlink()
+    with pytest.raises(ContractError, match="Missing stage result"):
+        generate_reports(inputs, tmp_path / "outputs")
+
+
+def test_generation_is_deterministic(tmp_path):
+    inputs = tmp_path / "inputs"
+    outputs = tmp_path / "outputs"
+    _pending_inputs(inputs)
+    first = generate_reports(inputs, outputs)
+    markdown = first.markdown.read_bytes()
+    html = first.html.read_bytes()
+    second = generate_reports(inputs, outputs)
+    assert second.markdown.read_bytes() == markdown
+    assert second.html.read_bytes() == html

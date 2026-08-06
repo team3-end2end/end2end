@@ -50,7 +50,20 @@ def _load_stages(input_dir: Path, strict: bool) -> dict[str, dict[str, Any]]:
             )
         result["status_label"] = STATUS_LABELS[result["status"]]
         results[stage] = result
+    _validate_cross_stage(results)
     return results
+
+
+def _validate_cross_stage(results: dict[str, dict[str, Any]]) -> None:
+    model = results["model"]
+    evaluation = results["evaluation"]
+    if model["status"] != "complete" or evaluation["status"] != "complete":
+        return
+    candidate_ids = {item["id"] for item in model["data"]["candidates"]}
+    result_ids = {item["model_id"] for item in evaluation["data"]["model_results"]}
+    unknown = sorted(result_ids - candidate_ids)
+    if unknown:
+        raise ContractError(f"Evaluation references unknown model candidates: {unknown}")
 
 
 def _display(value: Any, fallback: str = "준비 중") -> Any:

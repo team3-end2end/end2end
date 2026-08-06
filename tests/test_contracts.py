@@ -81,3 +81,49 @@ def test_writer_rejects_unknown_stage(tmp_path):
     with pytest.raises(ContractError, match="Unknown stage"):
         write_stage_result("unknown", {}, output_dir=tmp_path)
     assert list(tmp_path.iterdir()) == []
+
+
+def test_preprocessing_filter_counts_must_be_consistent():
+    with pytest.raises(ContractError, match="row counts are inconsistent"):
+        validate_stage_result(
+            {
+                "schema_version": 1,
+                "stage": "preprocessing",
+                "status": "complete",
+                "generated_at": None,
+                "error": None,
+                "data": {
+                    "input_shape": {"rows": 10, "columns": 2},
+                    "output_shape": {"rows": 7, "columns": 2},
+                    "retention_ratio": 0.7,
+                    "filters": [{"name": "bad", "rule": "x", "before_rows": 10, "after_rows": 7, "removed_rows": 2}],
+                    "selected_features": ["x"],
+                    "excluded_features": [],
+                    "derived_features": [],
+                    "transformations": [],
+                },
+            }
+        )
+
+
+def test_evaluation_confusion_matrix_must_match_labels():
+    data = {
+        "primary_metric": "macro_f1",
+        "model_results": [{
+            "model_id": "m1", "accuracy": 0.8, "macro_precision": 0.7,
+            "macro_recall": 0.7, "macro_f1": 0.7, "weighted_f1": 0.8,
+            "cv_mean": 0.7, "cv_std": 0.01,
+        }],
+        "class_metrics": [
+            {"label": "a", "precision": 0.7, "recall": 0.7, "f1": 0.7, "support": 5},
+            {"label": "b", "precision": 0.7, "recall": 0.7, "f1": 0.7, "support": 5},
+        ],
+        "confusion_matrix": {"labels": ["a", "b"], "values": [[4, 1]], "figure_path": None},
+        "selected_model_id": "m1",
+        "selection_reason": "best",
+        "limitations": [],
+    }
+    with pytest.raises(ContractError, match="must be square"):
+        validate_stage_result(
+            {"schema_version": 1, "stage": "evaluation", "status": "complete", "generated_at": None, "data": data, "error": None}
+        )
