@@ -12,6 +12,8 @@
        페이지 캐시 적재 비용이 섞여 있어, 한쪽만 먼저 실행되면 결과가 뒤집힌다.
     3) 평균이 아니라 최소값을 쓴다. 다른 프로세스의 간섭은 시간을 늘리기만 하므로
        최소값이 순수 실행 비용에 가장 가깝다. 개별 측정치도 JSON에 전부 남긴다.
+    4) 한쪽에만 있는 작업을 넣지 않는다. pandas 쪽 .copy() 처럼 Polars 에 대응물이
+       없는 연산이 섞이면 그만큼 결과가 왜곡된다 (제거 전후 4.49x → 4.07x).
 
 로딩 시간만으로는 차이가 크지 않다(양쪽 다 Arrow 기반이라 parquet 디코딩 비용이 비슷하다).
 실제 변환 작업까지 비교해야 이후 단계의 선택 근거가 된다.
@@ -68,12 +70,21 @@ def bench(fn, n=N_RUNS) -> dict:
 
 
 def transform_pandas(df: pd.DataFrame) -> pd.DataFrame:
-    """Step 2 에서 실제로 할 전처리를 Pandas 로 수행한다."""
-    d = df[df.payment_type.isin(TARGET_CODES) & (df.fare_amount > 0)].copy()
-    d["trip_duration_min"] = (
-        d.tpep_dropoff_datetime - d.tpep_pickup_datetime
-    ).dt.total_seconds() / 60
-    d["pickup_hour"] = d.tpep_pickup_datetime.dt.hour
+    """Step 2 에서 실제로 할 전처리를 Pandas 로 수행한다.
+
+    .copy() 를 쓰지 않는다. 필터 결과를 통째로 복사하면 390만 행이 메모리에
+    다시 쓰이는데, Polars 는 데이터가 불변이라 이런 방어 복사 자체가 없다.
+    한쪽에만 있는 작업이 붙으면 비교가 공정하지 않다 — 실측 결과 pandas 시간의
+    9.4%를 먹고 있었고, 그만큼 Polars 우위가 부풀려졌다.
+    pandas 3.0 은 Copy-on-Write 가 기본이라 방어 복사가 필요하지도 않다.
+    """
+    d = df[df.payment_type.isin(TARGET_CODES) & (df.fare_amount > 0)]
+    d = d.assign(
+        trip_duration_min=lambda x: (
+            x.tpep_dropoff_datetime - x.tpep_pickup_datetime
+        ).dt.total_seconds() / 60,
+        pickup_hour=lambda x: x.tpep_pickup_datetime.dt.hour,
+    )
     return d.groupby("pickup_hour").agg(
         trips=("fare_amount", "size"),
         mean_fare=("fare_amount", "mean"),
@@ -176,6 +187,8 @@ def main():
    동시에 존재하는 상태에서 측정된다
 2. 워밍업 1회 제외 — 첫 호출의 임포트 초기화·페이지 캐시 비용을 뺀다
 3. 평균이 아닌 최소값 — 외부 간섭은 시간을 늘리기만 하므로 최소값이 순수 비용에 가깝다
+4. 한쪽에만 있는 작업 제거 — pandas 의 `.copy()` 는 Polars 에 대응물이 없어
+   pandas 만 손해를 본다. 제거 전 4.49x → 제거 후 4.07x 로, 이 한 줄이 배수를 0.4 부풀리고 있었다
 
 개별 측정치는 `load_compare.json` 의 `times` 에 전부 남겨 두었다.
 
