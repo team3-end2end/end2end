@@ -248,6 +248,26 @@ Optuna가 100 trial을 세 모델에 나눠 배분하며 탐색한 결과입니�
 - trip_distance는 이 표본 크기에서도 p = 0.588로 유의하지 않다 — 카드 승객과 현금 승객의 이동 거리는 사실상 같다.
 - 이 결과는 6.2의 모델 진단과 정확히 일치한다: 트립 특성(거리·요금·시간) 피처에는 카드와 현금을 가를 신호가 거의 없으며, 이것이 XGBoost가 카드↔현금을 혼동한 근본 원인이다.
 
+### 6.6 시각화 근거
+
+아래 차트는 모두 코드로 생성된다 (`python main.py` 실행 시 재생성).
+
+**결제수단별 피처 분포 — 카드와 현금 곡선이 거의 포개짐**
+
+![해석용 피처 세트의 결제수단별 분포](../data_analysis/outputs/figures/02_dist_interpretable.png)
+
+- 생성: `python data_analysis/evaluate.py` (seaborn kdeplot)
+- 어느 피처를 봐도 카드(파란 계열)와 현금 곡선이 겹친다 — 6.5의 "효과크기 미미"를 눈으로 확인할 수 있다. 뚜렷하게 분리되는 것은 플렉스 페어뿐이며, 모델의 클래스별 성능(플렉스 F1 0.93 vs 현금 0.28)과 정확히 대응한다.
+
+**피처 개별 효과크기 — 전부 '작음' 기준 미만**
+
+![원본 피처 개별 효과크기](../data_analysis/outputs/figures/03_effect_sizes.png)
+
+- 생성: `python data_analysis/evaluate.py`
+- 6.5의 t-test 표(Cohen's d ≤ 0.11)를 시각화한 것. 카드 vs 현금을 단일 피처로 가를 수 없음을 보여준다.
+
+**인터랙티브 차트 (Plotly)**: 승차지역·경로별 결제 비율, JFK 정액제 구간 분석 등 5종은 `data_analysis/outputs/figures/plotly_01~05.html`에서 브라우저로 열어볼 수 있다 (생성: `python data_analysis/export_plotly_html.py`, 원본: `data_analysis/process.ipynb`).
+
 ---
 
 _1~5장은 `python -m reporting.generate`로 생성된 `report.md` 기준이며, 6장은 `reports/payment_model_comparison.md`의 해석과 `data_analysis` 통계 검정 결과를 정리한 것입니다._
