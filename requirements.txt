@@ -8,3 +8,7 @@ plotly>=6.9
 polars
 xgboost
 optuna
+scikit-learn
+joblib
+scipy
+statsmodels

@@ -15,3 +15,7 @@ __pycache__/
 data_analysis/outputs/subsets/
 data_analysis/outputs/tables/
 data_analysis/outputs/figures/
+
+# pipeline.py 산출물 — 모델 파일·결과 기록, 용량 크고 로컬마다 달라서 커밋 안 함
+outputs/
+pipeline_run.log
