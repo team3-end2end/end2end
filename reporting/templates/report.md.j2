@@ -19,6 +19,7 @@
 |---|---|
 | 프로젝트 | {{ run.project_name }} |
 | 실행 ID | `{{ run.run_id }}` |
+| 실행 일시 | {{ stages.run.generated_at | datetime }} |
 | 코드 리비전 | `{{ run.source_revision | display }}` |
 | 데이터셋 | `{{ run.dataset.path }}` |
 | 관측 기간 | {{ run.dataset.period_start | display }} ~ {{ run.dataset.period_end | display }} |
@@ -239,4 +240,4 @@
 
 ---
 
-_이 보고서는 `python -m reporting.generate`로 생성되었습니다. 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._
+_이 보고서는 `python -m reporting.generate`로 생성되었습니다 (평가 단계 기준 {{ stages.evaluation.generated_at | datetime }}). 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._

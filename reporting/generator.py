@@ -8,6 +8,7 @@ import mimetypes
 import os
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -113,6 +114,14 @@ def _seconds(value: Any) -> str:
     return "준비 중" if value is None else f"{float(value):,.2f}초"
 
 
+def _datetime(value: Any) -> str:
+    """ISO 8601 시각을 사람이 읽는 표기로 바꾼다. 시간대는 UTC 오프셋으로 함께 남긴다."""
+    if not value:
+        return "준비 중"
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return parsed.strftime("%Y-%m-%d %H:%M (UTC%z)").replace("UTC+0900", "KST")
+
+
 def _environment(template_name: str) -> Environment:
     """공통 포맷터와 출력 형식별 이스케이프 정책을 가진 Jinja 환경을 만든다."""
     environment = Environment(
@@ -125,7 +134,8 @@ def _environment(template_name: str) -> Environment:
         keep_trailing_newline=True,
     )
     environment.filters.update(
-        display=_display, integer=_integer, percent=_percent, seconds=_seconds
+        display=_display, integer=_integer, percent=_percent, seconds=_seconds,
+        datetime=_datetime,
     )
     return environment
 

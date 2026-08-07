@@ -142,7 +142,7 @@
       {% elif stages.evaluation.status == 'failed' %}<div class="error-panel">{{ stages.evaluation.error.message }}</div>
       {% else %}<div class="pending-panel">모델 학습과 평가가 완료되면 모델 설정, 전체·클래스별 지표와 혼동행렬이 표시됩니다.</div>{% endif %}
     </section>
-    <footer>이 문서는 <code>python -m reporting.generate</code>로 자동 생성되었습니다.</footer>
+    <footer>이 문서는 <code>python -m reporting.generate</code>로 자동 생성되었습니다. 실행 일시: {{ stages.run.generated_at | datetime }}</footer>
   </main>
 </body>
 </html>

@@ -195,7 +195,9 @@ def test_missing_column_counts_must_match_total():
 
 
 def test_generated_at_must_be_iso_datetime():
-    with pytest.raises(ContractError, match="ISO 8601"):
+    # jsonschema의 date-time 포맷 검사는 보조 라이브러리 유무에 따라 켜지므로,
+    # 스키마 단계와 의미 검증 단계 중 어디서 걸리든 거부되기만 하면 통과로 본다.
+    with pytest.raises(ContractError, match="ISO 8601|date-time"):
         validate_stage_result(
             {
                 "schema_version": 1,

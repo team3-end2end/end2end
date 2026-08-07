@@ -10,6 +10,7 @@
 |---|---|
 | 프로젝트 | team3-end2end/end2end |
 | 실행 ID | `pipeline-20260807-1032` |
+| 실행 일시 | 2026-08-07 22:31 (KST) |
 | 코드 리비전 | `98f16be` |
 | 데이터셋 | `eda/yellow_tripdata_2026-05_snappy.parquet` |
 | 관측 기간 | 2026-05-01 ~ 2026-05-31 |
@@ -174,4 +175,4 @@
 
 ---
 
-_이 보고서는 `python -m reporting.generate`로 생성되었습니다. 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._
+_이 보고서는 `python -m reporting.generate`로 생성되었습니다 (평가 단계 기준 2026-08-07 22:31 (KST)). 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._
