@@ -1,3 +1,16 @@
--r eda/requirements.txt
+pandas>=3.0
+numpy>=2.4
+pyarrow>=25.0
+matplotlib>=3.11
+missingno>=0.5
+seaborn>=0.13
+plotly>=6.9
+polars
+xgboost
+optuna
+scikit-learn
+joblib
+scipy
+statsmodels
 Jinja2>=3.1,<4
 jsonschema>=4.23,<5
