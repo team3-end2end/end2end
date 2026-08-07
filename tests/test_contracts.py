@@ -206,3 +206,48 @@ def test_generated_at_must_be_iso_datetime():
                 "error": None,
             }
         )
+
+
+def _run_result_with_load_comparison(shapes_match):
+    return {
+        "schema_version": 1,
+        "stage": "run",
+        "status": "complete",
+        "generated_at": "2026-08-07T00:00:00+09:00",
+        "data": {
+            "project_name": "end2end",
+            "report_title": "테스트",
+            "run_id": "test-run",
+            "source_revision": None,
+            "dataset": {
+                "name": "sample.parquet",
+                "path": "data/sample.parquet",
+                "period_start": None,
+                "period_end": None,
+                "shape": {"rows": 10, "columns": 2},
+            },
+            "target": {
+                "name": "label",
+                "problem_type": "multiclass_classification",
+                "classes": ["a", "b"],
+            },
+            "load_comparison": {
+                "results": [
+                    {"library": "Pandas", "seconds": 0.22, "shape": {"rows": 10, "columns": 2}},
+                    {"library": "Polars", "seconds": 0.10, "shape": {"rows": 10, "columns": 2}},
+                ],
+                "shapes_match": shapes_match,
+            },
+        },
+        "error": None,
+    }
+
+
+def test_run_load_comparison_is_accepted():
+    validate_stage_result(_run_result_with_load_comparison(shapes_match=True))
+
+
+def test_run_load_comparison_shapes_match_must_be_consistent():
+    # 실제 shape은 전부 같은데 shapes_match=False라고 적으면 모순이므로 거부한다.
+    with pytest.raises(ContractError, match="shapes_match"):
+        validate_stage_result(_run_result_with_load_comparison(shapes_match=False))

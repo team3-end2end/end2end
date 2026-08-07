@@ -20,7 +20,14 @@
       "problem_type": "multiclass_classification",
       "classes": ["카드", "플렉스 페어", "현금"]
     },
-    "is_sample": false
+    "is_sample": false,
+    "load_comparison": {
+      "results": [
+        {"library": "Pandas", "seconds": 0.22, "shape": {"rows": 4090836, "columns": 20}},
+        {"library": "Polars", "seconds": 0.10, "shape": {"rows": 4090836, "columns": 20}}
+      ],
+      "shapes_match": true
+    }
   },
   "error": null
 }

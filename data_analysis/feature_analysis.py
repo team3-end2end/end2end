@@ -636,9 +636,19 @@ def part5(df: pd.DataFrame) -> None:
          for c in CAT_COLS]
     ).sort_values("값", key=abs, ascending=False)
 
+    # t-test 증빙 — Welch t/p와 효과크기를 함께 저장 (n=389만이라 p만으로 판단 금지)
+    ttest_rows = []
+    for c in NUM_COLS:
+        t, p = stats.ttest_ind(card[c], cash[c], equal_var=False)
+        ttest_rows.append({"feature": c,
+                           "카드평균": round(card[c].mean(), 4), "현금평균": round(cash[c].mean(), 4),
+                           "t": round(t, 2), "p(Welch)": p,
+                           "Cohen_d": round(cohens_d(card[c], cash[c]), 4)})
+    t_ttest = pd.DataFrame(ttest_rows).sort_values("Cohen_d", key=abs, ascending=False)
+
     for fn, t in [("01_block_solo", t_solo), ("02_block_cumulative", t_cum),
                   ("03_final_compare", t_final), ("04_coefficients", t_coef),
-                  ("05_feature_effect", t_effect)]:
+                  ("05_feature_effect", t_effect), ("06_ttest_card_vs_cash", t_ttest)]:
         p = OUT / "tables" / f"{fn}.csv"
         t.to_csv(p, index=False, encoding="utf-8-sig")
         print(f"  {p.relative_to(OUT.parent)}  ({len(t)}행)")

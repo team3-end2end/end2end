@@ -19,6 +19,15 @@
 | 타깃 | `payment_label` · multiclass_classification |
 | 클래스 | 카드, 플렉스 페어, 현금 |
 
+### Pandas vs Polars 로딩 비교
+
+| 라이브러리 | 로딩 시간 | 로딩 결과 크기 |
+|---|---:|---:|
+| Pandas | 0.22초 | 4,090,836행 × 20열 |
+| Polars | 0.10초 | 4,090,836행 × 20열 |
+
+- 두 라이브러리의 로딩 결과 shape 일치 — 같은 데이터를 Polars가 약 2배 빠르게 읽었다 (측정: `eda/data_preparation/data_preparation.ipynb`).
+
 ## 2. EDA 결과
 
 > **상태:** 완료
@@ -220,6 +229,25 @@ Optuna가 100 trial을 세 모델에 나눠 배분하며 탐색한 결과입니�
 - 연습 기회가 11번뿐이었던 건 핑계가 안 된다. 이 모델은 조절할 수 있는 것 자체가 거의 없어서, 기회를 더 줬어도 점수는 비슷했을 것이다. 진 이유는 연습 부족이 아니라 몸의 한계다.
 - 그래도 쓸모는 있었다. "직선만 긋는 모델은 0.50, 구불구불 긋는 모델은 0.67"이라는 결과 자체가 **이 문제의 답은 단순한 규칙이 아니라 여러 조건의 조합에 숨어있다**는 증거가 됐다. 출발점(베이스라인) 역할은 한 셈이다.
 
+### 6.5 통계 검정 — 카드 vs 현금 (Welch t-test)
+
+수치형 피처 5개에 대해 카드·현금 두 집단의 평균 차이를 Welch t-test로 검정했다 (귀무가설 H0: 두 집단의 평균이 같다). 산출: `data_analysis/outputs/tables/06_ttest_card_vs_cash.csv` (`python data_analysis/feature_analysis.py`).
+
+| feature | 카드 평균 | 현금 평균 | t | p (Welch) | Cohen's d |
+|---|---:|---:|---:|---:|---:|
+| trip_duration | 18.8945 | 17.1353 | 64.17 | < 0.001 | 0.1064 |
+| cbd_congestion_fee | 0.5367 | 0.5061 | 48.91 | < 0.001 | 0.0902 |
+| tolls_amount | 0.6051 | 0.5272 | 19.01 | < 0.001 | 0.0341 |
+| fare_amount | 20.2502 | 20.3373 | -2.44 | 0.0149 | -0.0048 |
+| trip_distance | 3.4344 | 3.4298 | 0.54 | 0.5878 | 0.0010 |
+
+**p-value 해석**:
+
+- trip_duration·cbd_congestion_fee·tolls_amount·fare_amount 4개는 p < 0.05로 귀무가설을 기각한다 — 카드 승객과 현금 승객의 평균이 통계적으로는 다르다.
+- 단, 표본이 약 389만 건이면 아주 작은 차이도 유의하게 나오므로 p값만으로 판단해서는 안 된다. 효과크기(Cohen's d)를 함께 보면 가장 큰 trip_duration조차 d = 0.106으로 통상 기준(0.2 미만 = 무시할 수준)에 못 미친다. 즉 **통계적으로 유의하지만 실질적인 차이는 미미하다.**
+- trip_distance는 이 표본 크기에서도 p = 0.588로 유의하지 않다 — 카드 승객과 현금 승객의 이동 거리는 사실상 같다.
+- 이 결과는 6.2의 모델 진단과 정확히 일치한다: 트립 특성(거리·요금·시간) 피처에는 카드와 현금을 가를 신호가 거의 없으며, 이것이 XGBoost가 카드↔현금을 혼동한 근본 원인이다.
+
 ---
 
-_1~5장은 `python -m reporting.generate`로 생성된 `report.md` 기준이며, 6장은 `reports/payment_model_comparison.md`의 해석을 정리한 것입니다._
+_1~5장은 `python -m reporting.generate`로 생성된 `report.md` 기준이며, 6장은 `reports/payment_model_comparison.md`의 해석과 `data_analysis` 통계 검정 결과를 정리한 것입니다._

@@ -76,6 +76,9 @@
         <div class="card"><div class="label">모델</div><div class="value">XGBoost (Optuna 100 trial 중 최적)</div></div>
         <div class="card"><div class="label">Macro F1</div><div class="value">66.9%</div></div>
       </div>
+      <h3>Pandas vs Polars 로딩 비교</h3>
+      <div class="table-wrap"><table><thead><tr><th>라이브러리</th><th class="number">로딩 시간</th><th class="number">로딩 결과 크기</th></tr></thead><tbody><tr><td>Pandas</td><td class="number">0.22초</td><td class="number">4,090,836행 × 20열</td></tr><tr><td>Polars</td><td class="number">0.10초</td><td class="number">4,090,836행 × 20열</td></tr></tbody></table></div>
+      <p class="lead">두 라이브러리의 로딩 결과 shape 일치</p>
     </section>
 
     <section class="section">

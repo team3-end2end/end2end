@@ -325,6 +325,22 @@ def save(pipeline, model_name, best_params, n_rows, n_features, cv_macro_f1, tes
     return model_path
 
 
+def verify_saved_model(model_path, pipeline, X_check, n_check=10_000):
+    """저장한 모델을 다시 읽어 파일 존재·크기와 예측 일치를 확인한다.
+
+    "저장했다"를 믿지 않고 재로딩 후 예측이 원본 파이프라인과 같은지 검증한다.
+    전체 test로 두 번 예측하면 오래 걸리므로 앞 n_check행만 비교한다.
+    """
+    size = os.path.getsize(model_path)
+    if size == 0:
+        raise RuntimeError(f"저장된 모델 파일이 비어 있습니다: {model_path}")
+    loaded = joblib.load(model_path)
+    sample = X_check.head(n_check)
+    if not (loaded.predict(sample) == pipeline.predict(sample)).all():
+        raise RuntimeError(f"재로딩한 모델의 예측이 원본과 다릅니다: {model_path}")
+    print(f"[verify] 모델 파일 {size:,}B, 재로딩 예측 {len(sample):,}건 일치 확인")
+
+
 if __name__ == "__main__":
     print("[1/6] 데이터 불러오는 중...")
     df = load_data()
@@ -358,5 +374,6 @@ if __name__ == "__main__":
         n_rows=len(df), n_features=X_train.shape[1],
         cv_macro_f1=cv_macro_f1, test_acc=test_acc, test_macro_f1=test_macro_f1,
     )
+    verify_saved_model(model_path, final_pipeline, X_test)
 
     print(f"완료. 저장된 모델: {model_path}, 결과 기록: outputs/results.csv")

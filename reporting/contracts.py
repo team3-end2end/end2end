@@ -66,6 +66,14 @@ def _validate_semantics(result: Mapping[str, Any]) -> None:
     data = result["data"]
     problems: list[str] = []
 
+    if stage == "run":
+        comparison = data.get("load_comparison")
+        if comparison:
+            # shapes_match 값이 실제 로딩 결과 shape들의 일치 여부와 어긋나면 안 된다.
+            shapes = [(item["shape"]["rows"], item["shape"]["columns"]) for item in comparison["results"]]
+            if (len(set(shapes)) == 1) != comparison["shapes_match"]:
+                problems.append("load_comparison shapes_match must reflect the actual result shapes")
+
     if stage == "eda" and data["class_distribution"]:
         # 반올림 오차는 허용하되 클래스 비율 전체는 100%여야 한다.
         total_ratio = sum(item["ratio"] for item in data["class_distribution"])
