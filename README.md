@@ -29,7 +29,8 @@ pytest
 ## 데이터
 
 - 원본 출처: [https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet](https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet) (NYC TLC, 4,090,836행 × 20열)
-- 전처리된 학습용 데이터(`eda/data_preparation/payment_type_dataset.parquet`, 3,891,255행)가 저장소에 포함되어 있어 clone 후 바로 실행할 수 있다.
+- 전처리된 학습용 데이터(`eda/data_preparation/payment_type_dataset.parquet`, 3,891,255행)가 저장소에 포함되어 있어 clone 후 바로 실행할 수 있다. **`python main.py`와 `pytest`는 이 파일만으로 전부 동작한다.**
+- 원본 parquet(80MB)은 용량 때문에 저장소에 넣지 않았다. 위 URL에서 받아 `eda/yellow_tripdata_2026-05_snappy.parquet`로 두면 `data_analysis/process.ipynb`의 원본 비교 셀까지 재실행할 수 있다(없으면 해당 셀만 건너뛴다. 실행 결과는 노트북에 저장되어 있다).
 - 전처리 과정: [eda/data_preparation/data_preparation.ipynb](eda/data_preparation/data_preparation.ipynb) (Pandas vs Polars 로딩 비교 포함)
 
 
