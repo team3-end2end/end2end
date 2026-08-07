@@ -341,7 +341,8 @@ def verify_saved_model(model_path, pipeline, X_check, n_check=10_000):
     print(f"[verify] 모델 파일 {size:,}B, 재로딩 예측 {len(sample):,}건 일치 확인")
 
 
-if __name__ == "__main__":
+def main():
+    """전체 학습 파이프라인 6단계를 처음부터 끝까지 실행한다. (main.py에서도 호출)"""
     print("[1/6] 데이터 불러오는 중...")
     df = load_data()
 
@@ -377,3 +378,8 @@ if __name__ == "__main__":
     verify_saved_model(model_path, final_pipeline, X_test)
 
     print(f"완료. 저장된 모델: {model_path}, 결과 기록: outputs/results.csv")
+    return model_path
+
+
+if __name__ == "__main__":
+    main()
