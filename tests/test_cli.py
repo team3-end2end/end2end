@@ -1,11 +1,12 @@
 from reporting.__main__ import main
 
 
-def test_cli_strict_returns_two_for_pending_inputs(capsys):
+# 파이프라인 결과가 채워진 뒤에는 모든 단계가 complete이므로 strict 모드가 성공해야 한다.
+def test_cli_strict_succeeds_with_complete_inputs(capsys):
     exit_code = main(["--strict"])
     captured = capsys.readouterr()
-    assert exit_code == 2
-    assert "Strict mode requires complete stages" in captured.err
+    assert exit_code == 0
+    assert "generated: report.md" in captured.out
 
 
 def test_cli_check_reports_generated_paths(capsys):

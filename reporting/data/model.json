@@ -1,1 +1,32 @@
-{"schema_version": 1, "stage": "model", "status": "pending", "generated_at": null, "data": {}, "error": null}
+{
+  "schema_version": 1,
+  "stage": "model",
+  "status": "complete",
+  "generated_at": "2026-08-07T22:31:00+09:00",
+  "data": {
+    "split": {
+      "strategy": "stratified 80/20 split (튜닝은 train 표본 500,000행으로 3-fold CV)",
+      "train_samples": 3113004,
+      "validation_samples": 0,
+      "test_samples": 778251,
+      "random_seed": 42
+    },
+    "model": {
+      "id": "xgboost",
+      "name": "XGBoost (Optuna 100 trial 중 최적)",
+      "library": "xgboost",
+      "parameters": {
+        "n_estimators": 499,
+        "learning_rate": 0.2007,
+        "max_depth": 10,
+        "subsample": 0.6956,
+        "colsample_bytree": 0.6686,
+        "min_child_weight": 3,
+        "class_weight": "balanced (sample_weight)"
+      },
+      "training_seconds": 2396.0,
+      "artifact_path": "outputs/model_xgboost_20260807_1032.joblib"
+    }
+  },
+  "error": null
+}
