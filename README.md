@@ -24,32 +24,41 @@ python main.py --full     # Optuna 탐색 + 모델 학습부터 전체 재실행
 pytest
 ```
 
+
+
 ## 데이터
 
-- 원본 출처: <https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet> (NYC TLC, 4,090,836행 × 20열)
+- 원본 출처: [https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet](https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2026-05.parquet) (NYC TLC, 4,090,836행 × 20열)
 - 전처리된 학습용 데이터(`eda/data_preparation/payment_type_dataset.parquet`, 3,891,255행)가 저장소에 포함되어 있어 clone 후 바로 실행할 수 있다.
 - 전처리 과정: [eda/data_preparation/data_preparation.ipynb](eda/data_preparation/data_preparation.ipynb) (Pandas vs Polars 로딩 비교 포함)
 
+
+
 ## 산출물
 
-| 파일 | 내용 |
-|---|---|
-| `report.md` / `report.html` | 자동 생성 분석 보고서 (기술 문서 / 대시보드) |
-| `reports/final_report.md` | 제출용 최종본 — 자동 생성 수치 + 결과 해석 |
-| `outputs/model_*.joblib` | 학습된 sklearn Pipeline (전처리 포함) |
-| `outputs/results.csv` | 실행별 설정·성능 기록 |
-| `data_analysis/outputs/figures/plotly_*.html` | Plotly 인터랙티브 차트 5종 |
-| `data_analysis/outputs/tables/*.csv` | 통계 검정(t-test)·효과크기 결과표 |
+
+| 파일                                            | 내용                            |
+| --------------------------------------------- | ----------------------------- |
+| `report.md` / `report.html`                   | 자동 생성 분석 보고서 (기술 문서 / 대시보드)   |
+| `reports/final_report.md`                     | 제출용 최종본 — 자동 생성 수치 + 결과 해석    |
+| `outputs/model_*.joblib`                      | 학습된 sklearn Pipeline (전처리 포함) |
+| `outputs/results.csv`                         | 실행별 설정·성능 기록                  |
+| `data_analysis/outputs/figures/plotly_*.html` | Plotly 인터랙티브 차트 5종            |
+| `data_analysis/outputs/tables/*.csv`          | 통계 검정(t-test)·효과크기 결과표        |
+
 
 보고서 시스템 상세: [reporting/README.md](reporting/README.md) · 완성 화면 예시: [reporting/examples/report.example.md](reporting/examples/report.example.md)
 
 ## 팀 구성 / 역할
 
-| 담당 | 작업 |
-|---|---|
-| 데이터 전처리 | 원본 정제·필터링, 학습용 데이터셋 구축 (`eda/data_preparation/`) |
-| EDA·시각화 | 구조·통계 분석, 차트 (`eda/`, `data_analysis/process.ipynb`) |
-| 통계 분석 | t-test·효과크기·피처 검정 (`data_analysis/feature_analysis.py`) |
-| ML 파이프라인 | Optuna 튜닝 학습 파이프라인 (`pipeline.py`, `config.py`) |
-| 보고서 자동화 | report.md/html 생성 시스템 (`reporting/`) |
-| 결과 해석·통합 | 모델 비교 해석, 최종 보고서 (`reports/`) |
+
+| 담당                 | 작업                                                      |
+| ------------------ | ------------------------------------------------------- |
+| 데이터 전처리 (이찬혁, 정민교) | 원본 정제·필터링, 학습용 데이터셋 구축 (`eda/data_preparation/`)        |
+| EDA·시각화 (이은혜)      | 구조·통계 분석, 차트 (`eda/`, `data_analysis/process.ipynb`)    |
+| 통계 분석 (안중범)        | t-test·효과크기·피처 검정 (`data_analysis/feature_analysis.py`) |
+| ML 파이프라인 (장소영)     | Optuna 튜닝 학습 파이프라인 (`pipeline.py`, `config.py`)         |
+| 보고서 자동화 (이재호)      | report.md/html 생성 시스템 (`reporting/`)                    |
+| 결과 해석·통합 (이재호)     | 모델 비교 해석, 최종 보고서 (`reports/`)                           |
+
+

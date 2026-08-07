@@ -55,6 +55,7 @@ def main():
         print("저장된 학습 결과를 재사용합니다. 처음부터 학습하려면: python main.py --full")
 
     run_step("통계 분석 표 생성 (t-test·효과크기 CSV)", ["data_analysis/feature_analysis.py"])
+    run_step("Seaborn 정적 차트 생성 (png)", ["data_analysis/evaluate.py"])
     run_step("Plotly 차트 HTML 내보내기", ["data_analysis/export_plotly_html.py"])
     run_step("보고서 생성 (report.md / report.html)", ["-m", "reporting.generate", "--strict"])
 
@@ -63,6 +64,8 @@ def main():
         "report.html",
         "outputs/results.csv",
         "data_analysis/outputs/tables/06_ttest_card_vs_cash.csv",
+        "data_analysis/outputs/figures/02_dist_interpretable.png",
+        "data_analysis/outputs/figures/06_geo_encoding.png",
         *[f"data_analysis/outputs/figures/plotly_{i:02d}.html" for i in range(1, 6)],
     ])
     print("\n완료. 보고서: report.md / report.html")
