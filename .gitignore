@@ -3,6 +3,17 @@ data/
 .venv/
 eda/123/
 .DS_Store
+
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Versioned report inputs are intentionally tracked despite the general data rule.
+!reporting/data/
+!reporting/data/*.json
+!reporting/examples/
+!reporting/examples/data/
+!reporting/examples/data/*.json
 eda/data_preparation/yellow_tripdata_2026-05.parquet
 eda/data_preparation/data_preparation.ipynb
 

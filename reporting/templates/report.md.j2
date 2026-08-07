@@ -1,0 +1,230 @@
+{% macro stage_state(name) -%}
+> **상태:** {{ stages[name].status_label }}{% if stages[name].status == 'failed' %} — {{ stages[name].error.message }}{% endif %}
+{%- endmacro %}
+{% if is_sample %}
+> [!WARNING]
+> **SAMPLE — 화면 확인용 예시이며 모델 및 평가 수치는 실제 결과가 아닙니다.**
+
+{% endif %}
+# {{ run.report_title | default('데이터 분석 및 모델링 보고서', true) }}
+
+이 문서는 파이프라인 단계별 결과를 자동으로 모은 팀 내부 기술 보고서입니다.
+
+## 1. 실행 및 데이터 정보
+
+{{ stage_state('run') }}
+
+{% if stages.run.status == 'complete' %}
+| 항목 | 값 |
+|---|---|
+| 프로젝트 | {{ run.project_name }} |
+| 실행 ID | `{{ run.run_id }}` |
+| 코드 리비전 | `{{ run.source_revision | display }}` |
+| 데이터셋 | `{{ run.dataset.path }}` |
+| 관측 기간 | {{ run.dataset.period_start | display }} ~ {{ run.dataset.period_end | display }} |
+| 원본 크기 | {{ run.dataset.shape.rows | integer }}행 × {{ run.dataset.shape.columns | integer }}열 |
+| 타깃 | `{{ run.target.name }}` · {{ run.target.problem_type }} |
+| 클래스 | {{ run.target.classes | join(', ') }} |
+{% else %}
+프로젝트, 데이터셋, 실행 ID, 타깃 정의가 입력되면 여기에 표시됩니다.
+{% endif %}
+
+## 2. EDA 결과
+
+{{ stage_state('eda') }}
+
+{% if stages.eda.status == 'complete' %}
+### 데이터 품질
+
+| 수치형 변수 | 범주형 변수 | 결측 셀 | 중복 행 |
+|---:|---:|---:|---:|
+| {{ eda.numeric_feature_count | integer }} | {{ eda.categorical_feature_count | integer }} | {{ eda.missing_cell_count | integer }} | {{ eda.duplicate_row_count | integer }} |
+
+### 이상치와 상관관계
+
+- 이상치 수: **{{ eda.outlier_count | integer }}**
+- 이상치 규칙: {{ eda.outlier_rules | join(', ') | display }}
+- 높은 상관관계 기준: **|r| ≥ {{ '%.2f' | format(eda.correlation_threshold) }}**
+
+| 변수 A | 변수 B | 상관계수 |
+|---|---|---:|
+{% for item in eda.high_correlation_features %}
+| `{{ item.feature_a }}` | `{{ item.feature_b }}` | {{ '%.4f' | format(item.correlation) }} |
+{% else %}
+| 해당 없음 | — | — |
+{% endfor %}
+
+### 타깃 분포
+
+| 클래스 | 건수 | 비율 |
+|---|---:|---:|
+{% for item in eda.class_distribution %}
+| {{ item.label }} | {{ item.count | integer }} | {{ item.ratio | percent(2) }} |
+{% else %}
+| 준비 중 | — | — |
+{% endfor %}
+
+### 컬럼별 결측
+
+| 컬럼 | 결측 수 | 결측률 |
+|---|---:|---:|
+{% for item in eda.missing_by_column %}
+| `{{ item.column }}` | {{ item.count | integer }} | {{ item.ratio | percent(2) }} |
+{% else %}
+| 결측 컬럼 없음 | 0 | 0.00% |
+{% endfor %}
+
+### 시각화
+
+{% for figure in eda.figures %}
+#### {{ figure.title }}
+{% if figure.exists %}
+![{{ figure.alt }}]({{ figure.markdown_path }})
+{% else %}
+> 시각화 파일 없음: `{{ figure.path }}`
+{% endif %}
+{% else %}
+시각화가 등록되지 않았습니다.
+{% endfor %}
+{% else %}
+데이터 품질, 클래스 분포, 컬럼별 결측과 시각화가 입력되면 표시됩니다.
+{% endif %}
+
+## 3. 전처리 결과
+
+{{ stage_state('preprocessing') }}
+
+{% if stages.preprocessing.status == 'complete' %}
+- 입력: **{{ preprocessing.input_shape.rows | integer }}행 × {{ preprocessing.input_shape.columns | integer }}열**
+- 출력: **{{ preprocessing.output_shape.rows | integer }}행 × {{ preprocessing.output_shape.columns | integer }}열**
+- 데이터 유지율: **{{ preprocessing.retention_ratio | percent(2) }}**
+- 제거된 행: **{{ preprocessing.removed_row_count | integer }}**
+- 제거된 열: **{{ preprocessing.removed_column_count | integer }}**
+- 결측치 처리 변수: {{ preprocessing.imputed_features | join(', ') | display('없음') }}
+- 인코딩 변수: {{ preprocessing.encoded_features | join(', ') | display('없음') }}
+
+### 단계별 필터
+
+| 단계 | 규칙 | 적용 전 | 적용 후 | 제거 |
+|---|---|---:|---:|---:|
+{% for item in preprocessing.filters %}
+| {{ item.name }} | `{{ item.rule }}` | {{ item.before_rows | integer }} | {{ item.after_rows | integer }} | {{ item.removed_rows | integer }} |
+{% else %}
+| 준비 중 | — | — | — | — |
+{% endfor %}
+
+### 피처 구성
+
+- 선택 피처: {{ preprocessing.selected_features | join(', ') | display }}
+- 제외 피처:
+{% for item in preprocessing.excluded_features %}
+  - `{{ item }}`
+{% else %}
+  - 없음
+{% endfor %}
+- 파생 피처:
+{% for item in preprocessing.derived_features %}
+  - `{{ item }}`
+{% else %}
+  - 없음
+{% endfor %}
+- 변환:
+{% for item in preprocessing.transformations %}
+  - `{{ item.name }}` · 컬럼: {{ item.columns | join(', ') | display }} · 파라미터: `{{ item.parameters }}`
+{% else %}
+  - 없음
+{% endfor %}
+{% else %}
+필터 이력, 사용·제외·파생 피처와 최종 데이터 크기가 입력되면 표시됩니다.
+{% endif %}
+
+## 4. 모델 학습
+
+{{ stage_state('model') }}
+
+{% if stages.model.status == 'complete' %}
+### 데이터 분할
+
+| 전략 | 학습 | 검증 | 테스트 | Seed |
+|---|---:|---:|---:|---:|
+| {{ model.split.strategy }} | {{ model.split.train_samples | integer }} | {{ model.split.validation_samples | integer }} | {{ model.split.test_samples | integer }} | {{ model.split.random_seed }} |
+
+### 모델 정보
+
+| ID | 모델 | 라이브러리 | 학습 시간 | 산출물 |
+|---|---|---|---:|---|
+| `{{ model.model.id }}` | {{ model.model.name }} | {{ model.model.library }} | {{ model.model.training_seconds | seconds }} | `{{ model.model.artifact_path | display }}` |
+
+#### 하이퍼파라미터
+
+- `{{ model.model.id }}`: `{{ model.model.parameters }}`
+{% else %}
+데이터 분할, 모델 정보, 하이퍼파라미터와 학습 시간이 입력되면 표시됩니다.
+{% endif %}
+
+## 5. 평가 결과
+
+{{ stage_state('evaluation') }}
+
+{% if stages.evaluation.status == 'complete' %}
+- 평가 모델: **`{{ evaluation.model_id }}`**
+
+### 전체 평가 지표
+
+| Accuracy | Macro Precision | Macro Recall | Macro F1 | Weighted F1 |
+|---:|---:|---:|---:|---:|
+| {{ evaluation.metrics.accuracy | percent(3) }} | {{ evaluation.metrics.macro_precision | percent(3) }} | {{ evaluation.metrics.macro_recall | percent(3) }} | {{ evaluation.metrics.macro_f1 | percent(3) }} | {{ evaluation.metrics.weighted_f1 | percent(3) }} |
+
+### 교차 검증
+
+{% if evaluation.cross_validation %}
+| 지표 | Fold | 평균 | 표준편차 |
+|---|---:|---:|---:|
+| {{ evaluation.cross_validation.metric }} | {{ evaluation.cross_validation.folds }} | {{ evaluation.cross_validation.mean | percent(3) }} | {{ evaluation.cross_validation.std | percent(3) }} |
+{% else %}
+교차 검증을 수행하지 않았습니다.
+{% endif %}
+
+### 클래스별 성능
+
+| 클래스 | Precision | Recall | F1 | Support |
+|---|---:|---:|---:|---:|
+{% for item in evaluation.class_metrics %}
+| {{ item.label }} | {{ item.precision | percent(3) }} | {{ item.recall | percent(3) }} | {{ item.f1 | percent(3) }} | {{ item.support | integer }} |
+{% endfor %}
+
+### 혼동행렬
+
+| 실제 ＼ 예측 | {% for label in evaluation.confusion_matrix.labels %}{{ label }}{% if not loop.last %} | {% endif %}{% endfor %} |
+|---|{{ (['---:'] * (evaluation.confusion_matrix.labels | length)) | join('|') }}|
+{% for row in evaluation.confusion_matrix['values'] %}
+| **{{ evaluation.confusion_matrix.labels[loop.index0] }}** | {% for value in row %}{{ value | integer }}{% if not loop.last %} | {% endif %}{% endfor %} |
+{% endfor %}
+
+{% if evaluation.confusion_matrix.figure %}
+{% if evaluation.confusion_matrix.figure.exists %}
+![혼동행렬 히트맵]({{ evaluation.confusion_matrix.figure.markdown_path }})
+{% else %}
+> 시각화 파일 없음: `{{ evaluation.confusion_matrix.figure.path }}`
+{% endif %}
+{% endif %}
+
+### 평가 시각화
+
+{% for figure in evaluation.figures %}
+#### {{ figure.title }}
+{% if figure.exists %}
+![{{ figure.alt }}]({{ figure.markdown_path }})
+{% else %}
+> 시각화 파일 없음: `{{ figure.path }}`
+{% endif %}
+{% else %}
+시각화가 등록되지 않았습니다.
+{% endfor %}
+{% else %}
+전체·클래스별 지표, 교차 검증, 혼동행렬과 시각화가 입력되면 표시됩니다.
+{% endif %}
+
+---
+
+_이 보고서는 `python -m reporting.generate`로 생성되었습니다. 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._

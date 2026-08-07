@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://team3-end2end.github.io/schemas/report-stage-v1.json",
+  "title": "End-to-end report stage result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "stage", "status", "generated_at", "data", "error"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "stage": {"enum": ["run", "eda", "preprocessing", "model", "evaluation"]},
+    "status": {"enum": ["pending", "complete", "failed"]},
+    "generated_at": {"type": ["string", "null"], "format": "date-time"},
+    "data": {"type": "object"},
+    "error": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["message"],
+      "properties": {
+        "message": {"type": "string", "minLength": 1},
+        "details": {"type": ["string", "null"]}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "failed"}}, "required": ["status"]},
+      "then": {"properties": {"error": {"type": "object"}}},
+      "else": {"properties": {"error": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "complete"}}, "required": ["status"]},
+      "then": {
+        "allOf": [
+          {
+            "if": {"properties": {"stage": {"const": "run"}}, "required": ["stage"]},
+            "then": {"properties": {"data": {"$ref": "#/$defs/run"}}}
+          },
+          {
+            "if": {"properties": {"stage": {"const": "eda"}}, "required": ["stage"]},
+            "then": {"properties": {"data": {"$ref": "#/$defs/eda"}}}
+          },
+          {
+            "if": {"properties": {"stage": {"const": "preprocessing"}}, "required": ["stage"]},
+            "then": {"properties": {"data": {"$ref": "#/$defs/preprocessing"}}}
+          },
+          {
+            "if": {"properties": {"stage": {"const": "model"}}, "required": ["stage"]},
+            "then": {"properties": {"data": {"$ref": "#/$defs/model"}}}
+          },
+          {
+            "if": {"properties": {"stage": {"const": "evaluation"}}, "required": ["stage"]},
+            "then": {"properties": {"data": {"$ref": "#/$defs/evaluation"}}}
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "shape": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rows", "columns"],
+      "properties": {"rows": {"type": "integer", "minimum": 0}, "columns": {"type": "integer", "minimum": 0}}
+    },
+    "run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["project_name", "report_title", "run_id", "source_revision", "dataset", "target"],
+      "properties": {
+        "project_name": {"type": "string"}, "report_title": {"type": "string"},
+        "run_id": {"type": "string"}, "source_revision": {"type": ["string", "null"]},
+        "dataset": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "path", "period_start", "period_end", "shape"],
+          "properties": {
+            "name": {"type": "string"}, "path": {"type": "string"},
+            "period_start": {"type": ["string", "null"]}, "period_end": {"type": ["string", "null"]},
+            "shape": {"$ref": "#/$defs/shape"}
+          }
+        },
+        "target": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "problem_type", "classes"],
+          "properties": {
+            "name": {"type": "string"}, "problem_type": {"type": "string"},
+            "classes": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "is_sample": {"type": "boolean", "default": false}
+      }
+    },
+    "eda": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numeric_feature_count", "categorical_feature_count", "missing_cell_count", "duplicate_row_count", "outlier_count", "outlier_rules", "correlation_threshold", "high_correlation_features", "missing_by_column", "class_distribution", "figures"],
+      "properties": {
+        "numeric_feature_count": {"type": "integer", "minimum": 0},
+        "categorical_feature_count": {"type": "integer", "minimum": 0},
+        "missing_cell_count": {"type": "integer", "minimum": 0},
+        "duplicate_row_count": {"type": "integer", "minimum": 0},
+        "outlier_count": {"type": "integer", "minimum": 0},
+        "outlier_rules": {"type": "array", "items": {"type": "string"}},
+        "correlation_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "high_correlation_features": {"type": "array", "items": {"$ref": "#/$defs/correlationPair"}},
+        "missing_by_column": {"type": "array", "items": {"$ref": "#/$defs/missingColumn"}},
+        "class_distribution": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/classDistribution"}},
+        "figures": {"type": "array", "items": {"$ref": "#/$defs/figure"}}
+      }
+    },
+    "missingColumn": {
+      "type": "object", "additionalProperties": false, "required": ["column", "count", "ratio"],
+      "properties": {
+        "column": {"type": "string"}, "count": {"type": "integer", "minimum": 0},
+        "ratio": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "classDistribution": {
+      "type": "object", "additionalProperties": false, "required": ["label", "count", "ratio"],
+      "properties": {"label": {"type": "string"}, "count": {"type": "integer", "minimum": 0}, "ratio": {"type": "number", "minimum": 0, "maximum": 1}}
+    },
+    "correlationPair": {
+      "type": "object", "additionalProperties": false, "required": ["feature_a", "feature_b", "correlation"],
+      "properties": {
+        "feature_a": {"type": "string"}, "feature_b": {"type": "string"},
+        "correlation": {"type": "number", "minimum": -1, "maximum": 1}
+      }
+    },
+    "figure": {
+      "type": "object", "additionalProperties": false, "required": ["title", "path", "alt"],
+      "properties": {"title": {"type": "string"}, "path": {"type": "string"}, "alt": {"type": "string"}}
+    },
+    "preprocessing": {
+      "type": "object", "additionalProperties": false,
+      "required": ["input_shape", "output_shape", "retention_ratio", "removed_row_count", "removed_column_count", "imputed_features", "encoded_features", "filters", "selected_features", "excluded_features", "derived_features", "transformations"],
+      "properties": {
+        "input_shape": {"$ref": "#/$defs/shape"}, "output_shape": {"$ref": "#/$defs/shape"},
+        "retention_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "removed_row_count": {"type": "integer", "minimum": 0},
+        "removed_column_count": {"type": "integer", "minimum": 0},
+        "imputed_features": {"type": "array", "items": {"type": "string"}},
+        "encoded_features": {"type": "array", "items": {"type": "string"}},
+        "filters": {"type": "array", "items": {"$ref": "#/$defs/filter"}},
+        "selected_features": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "excluded_features": {"type": "array", "items": {"type": "string"}},
+        "derived_features": {"type": "array", "items": {"type": "string"}},
+        "transformations": {"type": "array", "items": {"$ref": "#/$defs/transformation"}}
+      }
+    },
+    "filter": {
+      "type": "object", "additionalProperties": false, "required": ["name", "rule", "before_rows", "after_rows", "removed_rows"],
+      "properties": {
+        "name": {"type": "string"}, "rule": {"type": "string"},
+        "before_rows": {"type": "integer", "minimum": 0}, "after_rows": {"type": "integer", "minimum": 0},
+        "removed_rows": {"type": "integer", "minimum": 0}
+      }
+    },
+    "transformation": {
+      "type": "object", "additionalProperties": false, "required": ["name", "columns", "parameters"],
+      "properties": {
+        "name": {"type": "string"}, "columns": {"type": "array", "items": {"type": "string"}},
+        "parameters": {"type": "object"}
+      }
+    },
+    "model": {
+      "type": "object", "additionalProperties": false, "required": ["split", "model"],
+      "properties": {
+        "split": {"$ref": "#/$defs/split"},
+        "model": {"$ref": "#/$defs/trainedModel"}
+      }
+    },
+    "split": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "train_samples", "validation_samples", "test_samples", "random_seed"],
+      "properties": {
+        "strategy": {"type": "string"}, "train_samples": {"type": "integer", "minimum": 0},
+        "validation_samples": {"type": "integer", "minimum": 0}, "test_samples": {"type": "integer", "minimum": 0},
+        "random_seed": {"type": "integer"}
+      }
+    },
+    "trainedModel": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "library", "parameters", "training_seconds", "artifact_path"],
+      "properties": {
+        "id": {"type": "string"}, "name": {"type": "string"}, "library": {"type": "string"},
+        "parameters": {"type": "object"}, "training_seconds": {"type": "number", "minimum": 0},
+        "artifact_path": {"type": ["string", "null"]}
+      }
+    },
+    "evaluation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model_id", "metrics", "cross_validation", "class_metrics", "confusion_matrix", "figures"],
+      "properties": {
+        "model_id": {"type": "string"},
+        "metrics": {"$ref": "#/$defs/metrics"},
+        "cross_validation": {"anyOf": [{"$ref": "#/$defs/crossValidation"}, {"type": "null"}]},
+        "class_metrics": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/classMetric"}},
+        "confusion_matrix": {"$ref": "#/$defs/confusionMatrix"},
+        "figures": {"type": "array", "items": {"$ref": "#/$defs/figure"}}
+      }
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_f1"],
+      "properties": {
+        "accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+        "macro_precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "macro_recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "macro_f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "weighted_f1": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "crossValidation": {
+      "type": "object", "additionalProperties": false, "required": ["metric", "mean", "std", "folds"],
+      "properties": {
+        "metric": {"type": "string"}, "mean": {"type": "number", "minimum": 0, "maximum": 1},
+        "std": {"type": "number", "minimum": 0}, "folds": {"type": "integer", "minimum": 2}
+      }
+    },
+    "classMetric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["label", "precision", "recall", "f1", "support"],
+      "properties": {
+        "label": {"type": "string"},
+        "precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "support": {"type": "integer", "minimum": 0}
+      }
+    },
+    "confusionMatrix": {
+      "type": "object", "additionalProperties": false, "required": ["labels", "values", "figure_path"],
+      "properties": {
+        "labels": {"type": "array", "items": {"type": "string"}},
+        "values": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 0}}},
+        "figure_path": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

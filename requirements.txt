@@ -12,3 +12,5 @@ scikit-learn
 joblib
 scipy
 statsmodels
+Jinja2>=3.1,<4
+jsonschema>=4.23,<5

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "stage": "preprocessing",
+  "status": "complete",
+  "generated_at": "2026-08-06T10:00:00+09:00",
+  "data": {
+    "input_shape": {"rows": 4090836, "columns": 20},
+    "output_shape": {"rows": 3891255, "columns": 12},
+    "retention_ratio": 0.9512,
+    "removed_row_count": 199581,
+    "removed_column_count": 10,
+    "imputed_features": [],
+    "encoded_features": ["PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"],
+    "filters": [
+      {"name": "양수 요금", "rule": "fare_amount > 0", "before_rows": 4090836, "after_rows": 4073654, "removed_rows": 17182},
+      {"name": "양수 거리", "rule": "trip_distance > 0", "before_rows": 4073654, "after_rows": 3962811, "removed_rows": 110843},
+      {"name": "거리 극단값", "rule": "trip_distance < 200", "before_rows": 3962811, "after_rows": 3962738, "removed_rows": 73},
+      {"name": "요금·거리 불일치", "rule": "~(fare_amount >= 100 and trip_distance < 1)", "before_rows": 3962738, "after_rows": 3962189, "removed_rows": 549},
+      {"name": "타깃 클래스", "rule": "payment_type in {0, 1, 2}", "before_rows": 3962189, "after_rows": 3942906, "removed_rows": 19283},
+      {"name": "관측 기간", "rule": "pickup in 2026-05", "before_rows": 3942906, "after_rows": 3942892, "removed_rows": 14},
+      {"name": "운행 시간", "rule": "0 < trip_duration < 180", "before_rows": 3942892, "after_rows": 3891255, "removed_rows": 51637}
+    ],
+    "selected_features": [
+      "trip_distance", "fare_amount", "trip_duration", "cbd_congestion_fee", "tolls_amount",
+      "PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"
+    ],
+    "excluded_features": ["tip_amount", "total_amount", "passenger_count", "RatecodeID", "mta_tax", "improvement_surcharge"],
+    "derived_features": ["trip_duration", "hour", "day_of_week", "is_airport"],
+    "transformations": [
+      {
+        "name": "OneHotEncoder",
+        "columns": ["PULocationID", "DOLocationID", "hour", "day_of_week", "VendorID", "is_airport"],
+        "parameters": {"handle_unknown": "ignore"}
+      },
+      {
+        "name": "StandardScaler",
+        "columns": ["trip_distance", "fare_amount", "trip_duration", "cbd_congestion_fee", "tolls_amount"],
+        "parameters": {}
+      }
+    ]
+  },
+  "error": null
+}

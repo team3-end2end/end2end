@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>데이터 분석 및 모델링 보고서</title>
+  <style>
+    :root {
+      --bg: #f5f7fb; --surface: #ffffff; --surface-soft: #f8fafc;
+      --ink: #172033; --muted: #64748b; --line: #e2e8f0;
+      --primary: #3157d5; --primary-soft: #edf2ff; --accent: #0f9f84;
+      --warning: #a16207; --warning-soft: #fef9c3; --danger: #b42318;
+      --radius: 18px; --shadow: 0 10px 35px rgba(15, 23, 42, .08);
+      --content: 1160px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif; line-height: 1.65; }
+    a { color: var(--primary); }
+    .topbar { height: 7px; background: linear-gradient(90deg, var(--primary), #6d5ee8, var(--accent)); }
+    main { width: min(calc(100% - 32px), var(--content)); margin: 0 auto; padding: 46px 0 72px; }
+    .hero { padding: 42px; border-radius: 26px; color: #fff; background: linear-gradient(135deg, #172554, #3157d5 62%, #0f9f84); box-shadow: var(--shadow); }
+    .eyebrow { margin: 0 0 8px; font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
+    h1 { margin: 0; max-width: 820px; font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1.12; letter-spacing: -.045em; }
+    .hero p { max-width: 720px; margin: 18px 0 0; color: #dbeafe; }
+    .sample-banner { margin: 0 0 20px; padding: 16px 20px; border: 1px solid #facc15; border-radius: 14px; color: #713f12; background: var(--warning-soft); font-weight: 750; }
+    .section { margin-top: 28px; padding: 30px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+    .section-head { display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    h2 { margin: 0; font-size: 1.45rem; letter-spacing: -.025em; }
+    h3 { margin: 24px 0 12px; font-size: 1.05rem; }
+    .lead { color: var(--muted); margin: 6px 0 0; }
+    .badge { display: inline-flex; flex: none; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: .76rem; font-weight: 800; }
+    .badge.complete { color: #06715e; background: #dff8f0; }
+    .badge.pending { color: #6b7280; background: #eef1f5; }
+    .badge.failed { color: var(--danger); background: #fee4e2; }
+    .badge.sample { color: #713f12; background: #fef3c7; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .card { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); }
+    .card .label { color: var(--muted); font-size: .78rem; font-weight: 700; }
+    .card .value { margin-top: 6px; overflow-wrap: anywhere; font-size: 1.35rem; font-weight: 850; letter-spacing: -.025em; }
+    .pending-panel { padding: 24px; border: 1px dashed #b8c1d1; border-radius: 14px; color: var(--muted); background: var(--surface-soft); text-align: center; }
+    .error-panel { padding: 16px; border-radius: 12px; color: var(--danger); background: #fff1f0; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { padding: 11px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; white-space: nowrap; }
+    th { color: #475569; background: #f8fafc; font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; }
+    tr:last-child td { border-bottom: 0; }
+    .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .figures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    figure { margin: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    figure img { display: block; width: 100%; height: auto; }
+    figcaption { padding: 14px 16px; color: var(--muted); font-size: .86rem; }
+    .feature-list { display: flex; flex-wrap: wrap; gap: 7px; padding: 0; list-style: none; }
+    .feature-list li { padding: 5px 9px; border-radius: 8px; color: #344155; background: #edf1f7; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+    details { margin-top: 24px; padding: 0 18px; border: 1px solid var(--line); border-radius: 12px; }
+    summary { cursor: pointer; padding: 15px 0; font-weight: 800; }
+    footer { margin-top: 28px; color: var(--muted); text-align: center; font-size: .82rem; }
+    @media (max-width: 850px) { .grid { grid-template-columns: repeat(2, 1fr); } .figures { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { main { width: min(calc(100% - 20px), var(--content)); padding-top: 20px; } .hero, .section { padding: 22px; } .grid { grid-template-columns: 1fr; } .section-head { display: block; } .section-head .badge { margin-top: 10px; } }
+    @media print { :root { --bg: #fff; --shadow: none; } .topbar { display: none; } main { width: 100%; padding: 0; } .hero { color: #111827; background: #fff; border: 2px solid #111827; } .hero p { color: #475569; } .section { break-inside: avoid; } details { display: block; } }
+  </style>
+</head>
+<body>
+  <div class="topbar"></div>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Data &amp; Model Report</p>
+      <h1>데이터 분석 및 모델링 보고서</h1>
+      <p>파이프라인이 완료되면 실행 결과 수치와 이미지가 자동으로 채워집니다.</p>
+    </header>
+
+    <section class="section">
+      <div class="section-head"><div><h2>실행 결과 요약</h2><p class="lead">현재 파이프라인 상태와 자동 계산된 주요 수치입니다.</p></div><span class="badge pending">준비 중</span></div>
+      <div class="grid">
+        <div class="card"><div class="label">원본 데이터</div><div class="value">준비 중</div></div>
+        <div class="card"><div class="label">데이터 유지율</div><div class="value">준비 중</div></div>
+        <div class="card"><div class="label">모델</div><div class="value">준비 중</div></div>
+        <div class="card"><div class="label">Macro F1</div><div class="value">준비 중</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><div><h2>데이터 통계</h2><p class="lead">입력 데이터의 구조, 결측 현황과 클래스 분포입니다.</p></div><span class="badge pending">준비 중</span></div>
+<div class="pending-panel">EDA가 완료되면 데이터 구조, 결측, 클래스 분포와 시각화가 표시됩니다.</div>    </section>
+
+    <section class="section">
+      <div class="section-head"><div><h2>데이터 준비</h2><p class="lead">모델이 학습할 수 있도록 어떤 데이터를 남기고 바꿨는지 보여줍니다.</p></div><span class="badge pending">준비 중</span></div>
+<div class="pending-panel">전처리가 완료되면 데이터 유지율, 필터 이력과 선택 피처가 표시됩니다.</div>    </section>
+
+    <section class="section">
+      <div class="section-head"><div><h2>모델 정보 및 평가</h2><p class="lead">학습된 단일 모델의 설정과 자동 계산된 평가 지표입니다.</p></div><span class="badge pending">준비 중</span></div>
+<div class="pending-panel">모델 학습과 평가가 완료되면 모델 설정, 전체·클래스별 지표와 혼동행렬이 표시됩니다.</div>    </section>
+    <footer>이 문서는 <code>python -m reporting.generate</code>로 자동 생성되었습니다.</footer>
+  </main>
+</body>
+</html>
