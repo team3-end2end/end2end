@@ -17,6 +17,10 @@ __pycache__/
 eda/data_preparation/yellow_tripdata_2026-05.parquet
 eda/data_preparation/data_preparation.ipynb
 
+# 원본 데이터(80MB)는 저장소에 넣지 않는다 — 출처 URL은 README에 있다.
+# 학습·분석은 전처리본(payment_type_dataset.parquet, 28MB)만으로 전부 실행된다.
+eda/yellow_tripdata_2026-05_snappy.parquet
+
 __pycache__/
 *.pyc
 

@@ -1,1 +1,33 @@
-{"schema_version": 1, "stage": "run", "status": "pending", "generated_at": null, "data": {}, "error": null}
+{
+  "schema_version": 1,
+  "stage": "run",
+  "status": "complete",
+  "generated_at": "2026-08-07T22:31:00+09:00",
+  "data": {
+    "project_name": "team3-end2end/end2end",
+    "report_title": "NYC Yellow Taxi 결제수단 예측 보고서",
+    "run_id": "pipeline-20260807-1032",
+    "source_revision": "98f16be",
+    "dataset": {
+      "name": "NYC Yellow Taxi 2026-05",
+      "path": "eda/yellow_tripdata_2026-05_snappy.parquet",
+      "period_start": "2026-05-01",
+      "period_end": "2026-05-31",
+      "shape": {"rows": 4090836, "columns": 20}
+    },
+    "target": {
+      "name": "payment_label",
+      "problem_type": "multiclass_classification",
+      "classes": ["카드", "플렉스 페어", "현금"]
+    },
+    "is_sample": false,
+    "load_comparison": {
+      "results": [
+        {"library": "Pandas", "seconds": 0.22, "shape": {"rows": 4090836, "columns": 20}},
+        {"library": "Polars", "seconds": 0.10, "shape": {"rows": 4090836, "columns": 20}}
+      ],
+      "shapes_match": true
+    }
+  },
+  "error": null
+}

@@ -1,1 +1,33 @@
-{"schema_version": 1, "stage": "evaluation", "status": "pending", "generated_at": null, "data": {}, "error": null}
+{
+  "schema_version": 1,
+  "stage": "evaluation",
+  "status": "complete",
+  "generated_at": "2026-08-07T22:31:00+09:00",
+  "data": {
+    "model_id": "xgboost",
+    "metrics": {
+      "accuracy": 0.742822,
+      "macro_precision": 0.677306,
+      "macro_recall": 0.711549,
+      "macro_f1": 0.668759,
+      "weighted_f1": 0.780184
+    },
+    "cross_validation": null,
+    "class_metrics": [
+      {"label": "플렉스 페어", "precision": 0.941684, "recall": 0.922886, "f1": 0.93219, "support": 175637},
+      {"label": "카드", "precision": 0.897654, "recall": 0.716181, "f1": 0.796714, "support": 532026},
+      {"label": "현금", "precision": 0.192579, "recall": 0.49558, "f1": 0.277373, "support": 70588}
+    ],
+    "confusion_matrix": {
+      "labels": ["플렉스 페어", "카드", "현금"],
+      "values": [
+        [162093, 9469, 4075],
+        [8406, 381027, 142593],
+        [1632, 33974, 34982]
+      ],
+      "figure_path": null
+    },
+    "figures": []
+  },
+  "error": null
+}

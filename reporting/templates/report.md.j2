@@ -19,12 +19,25 @@
 |---|---|
 | 프로젝트 | {{ run.project_name }} |
 | 실행 ID | `{{ run.run_id }}` |
+| 실행 일시 | {{ stages.run.generated_at | datetime }} |
 | 코드 리비전 | `{{ run.source_revision | display }}` |
 | 데이터셋 | `{{ run.dataset.path }}` |
 | 관측 기간 | {{ run.dataset.period_start | display }} ~ {{ run.dataset.period_end | display }} |
 | 원본 크기 | {{ run.dataset.shape.rows | integer }}행 × {{ run.dataset.shape.columns | integer }}열 |
 | 타깃 | `{{ run.target.name }}` · {{ run.target.problem_type }} |
 | 클래스 | {{ run.target.classes | join(', ') }} |
+{% if run.get('load_comparison') %}
+
+### Pandas vs Polars 로딩 비교
+
+| 라이브러리 | 로딩 시간 | 로딩 결과 크기 |
+|---|---:|---:|
+{% for item in run.load_comparison.results %}
+| {{ item.library }} | {{ item.seconds | seconds }} | {{ item.shape.rows | integer }}행 × {{ item.shape.columns | integer }}열 |
+{% endfor %}
+
+- 두 라이브러리의 로딩 결과 shape {{ '일치' if run.load_comparison.shapes_match else '**불일치 — 원인 확인 필요**' }}
+{% endif %}
 {% else %}
 프로젝트, 데이터셋, 실행 ID, 타깃 정의가 입력되면 여기에 표시됩니다.
 {% endif %}
@@ -227,4 +240,4 @@
 
 ---
 
-_이 보고서는 `python -m reporting.generate`로 생성되었습니다. 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._
+_이 보고서는 `python -m reporting.generate`로 생성되었습니다 (평가 단계 기준 {{ stages.evaluation.generated_at | datetime }}). 직접 수정하지 말고 단계별 JSON 또는 템플릿을 변경하세요._

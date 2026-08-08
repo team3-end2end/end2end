@@ -1,1 +1,44 @@
-{"schema_version": 1, "stage": "eda", "status": "pending", "generated_at": null, "data": {}, "error": null}
+{
+  "schema_version": 1,
+  "stage": "eda",
+  "status": "complete",
+  "generated_at": "2026-08-07T22:31:00+09:00",
+  "data": {
+    "numeric_feature_count": 13,
+    "categorical_feature_count": 5,
+    "missing_cell_count": 4776855,
+    "duplicate_row_count": 0,
+    "outlier_count": 622,
+    "outlier_rules": ["trip_distance < 200", "~(fare_amount >= 100 and trip_distance < 1)"],
+    "correlation_threshold": 0.8,
+    "high_correlation_features": [
+      {"feature_a": "trip_distance", "feature_b": "fare_amount", "correlation": 0.866},
+      {"feature_a": "fare_amount", "feature_b": "total_amount", "correlation": 0.96}
+    ],
+    "missing_by_column": [
+      {"column": "passenger_count", "count": 955371, "ratio": 0.2335},
+      {"column": "RatecodeID", "count": 955371, "ratio": 0.2335},
+      {"column": "store_and_fwd_flag", "count": 955371, "ratio": 0.2335},
+      {"column": "congestion_surcharge", "count": 955371, "ratio": 0.2335},
+      {"column": "Airport_fee", "count": 955371, "ratio": 0.2335}
+    ],
+    "class_distribution": [
+      {"label": "카드", "count": 2660128, "ratio": 0.68361698},
+      {"label": "플렉스 페어", "count": 878188, "ratio": 0.22568246},
+      {"label": "현금", "count": 352939, "ratio": 0.09070056}
+    ],
+    "figures": [
+      {
+        "title": "결제수단별 요금·거리 분포",
+        "path": "eda/handoff/figures/target_box.png",
+        "alt": "결제수단별 요금과 거리 박스플롯"
+      },
+      {
+        "title": "원본 데이터 결측 패턴",
+        "path": "eda/handoff/figures/missing_matrix.png",
+        "alt": "컬럼별 결측값 발생 패턴"
+      }
+    ]
+  },
+  "error": null
+}

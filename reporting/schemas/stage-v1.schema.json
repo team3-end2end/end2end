@@ -84,7 +84,24 @@
             "classes": {"type": "array", "items": {"type": "string"}}
           }
         },
-        "is_sample": {"type": "boolean", "default": false}
+        "is_sample": {"type": "boolean", "default": false},
+        "load_comparison": {
+          "type": "object", "additionalProperties": false,
+          "required": ["results", "shapes_match"],
+          "properties": {
+            "results": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/loadResult"}},
+            "shapes_match": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "loadResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["library", "seconds", "shape"],
+      "properties": {
+        "library": {"type": "string"},
+        "seconds": {"type": "number", "minimum": 0},
+        "shape": {"$ref": "#/$defs/shape"}
       }
     },
     "eda": {
